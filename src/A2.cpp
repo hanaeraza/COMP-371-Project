@@ -36,20 +36,14 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
 // Translation keyboard input variables
 vec3 position(0.0f);
 float rotation = 0.0f;
-float rotationU = 0.0f;
 vec3 rotationAngle = vec3(0.0f, 1.0f, 0.0f);
-float orientationRotation = 0.0f;
 vec3 scaling(1.0f);
-vec3 rotationAxis = vec3(0.0f, 1.0f, 0.0f);
-GLenum mode = GL_TRIANGLES;
 float fov = 70.0f;
 // Hierarchical Modeling
 
 mat4 partMatrix = scale(mat4(1.0f), vec3(-1.0f, 1.0f, 1.0f));
-mat4 upperArmMatrix = translate(mat4(1.0f), vec3(0.0f, 3.0f, 0.0f)) * rotate(mat4(1.0f), radians(0.0f + rotationU), rotationAngle);
 mat4 groupMatrix = translate(mat4(1.0f), vec3(0.0f + position.x, 0.0f + position.y, 0.0f + position.z)) * scale(mat4(1.0f), vec3(0.1f + scaling.x, 0.1f + scaling.y, 0.1f + scaling.z)) * rotate(mat4(1.0f), radians(0.0f + rotation), vec3(0.0f, 1.0f, 0.0f));
-mat4 orientationMatrix = rotate(mat4(1.0f), radians(0.0f + orientationRotation), vec3(0.0f + rotationAxis.x, 0.0f + rotationAxis.y, 0.0f + rotationAxis.z));
-mat4 worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * partMatrix;
+mat4 worldMatrix = groupMatrix * partMatrix;
 
 // window dimensions
 const GLuint WIDTH = 1024, HEIGHT = 768;
@@ -246,7 +240,7 @@ int main(int argc, char* argv[])
     glReadBuffer(GL_NONE); //disable rendering colors, only write depth values 
 
 
-    // shader config
+    // Shader config
 
     GLuint textureMapLocation = glGetUniformLocation(shaderScene, "textureSampler");
     glUniform1i(textureMapLocation, 0);
@@ -257,19 +251,19 @@ int main(int argc, char* argv[])
 
   // Camera parameters for view transform
     vec3 cameraPosition(0.6f, 3.0f, 10.0f);
+    vec3 cameraPositionWalking(0.6f, 3.0f, 10.0f);
     vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
     // Other camera parameters
-    float cameraSpeed = 1.0f;
-    float cameraFastSpeed = 3 * cameraSpeed;
+    float cameraSpeed = 3.0f;
+    float cameraFastSpeed = 2 * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
     fov = 70.0f;
     bool  cameraFirstPerson = true; 
 
     int selection = 0;
-    int armSelection = 3;
 
 
     // Set projection matrix for shader, this won't change
@@ -336,8 +330,8 @@ int main(int argc, char* argv[])
 
 
         // light parameters
-        vec3 lightPosition = vec3(1.0f, 20.0f, 10.0f); // the location of the light in 3D space
-        vec3 lightFocus(0.0, 0.0, 0.0);      // the point in 3D space the light "looks" at
+        vec3 lightPosition = vec3(1.0f, 20.0f, 5.0f); // the location of the light in 3D space
+        vec3 lightFocus(0.0, -1.0, 0.0);      // the point in 3D space the light "looks" at
         vec3 lightDirection = normalize(lightFocus - lightPosition);
 
         float lightNearPlane = 1.0f;
@@ -377,10 +371,8 @@ int main(int argc, char* argv[])
         SetUniformVec3(shaderScene, "view_position", cameraPosition);
 
         partMatrix = scale(mat4(1.0f), vec3(-1.0f, 1.0f, 1.0f));
-        upperArmMatrix = translate(mat4(1.0f), vec3(0.0f, 3.0f, 0.0f)) * rotate(mat4(1.0f), radians(0.0f + rotationU), rotationAngle);
         groupMatrix = translate(mat4(1.0f), vec3(0.0f + position.x, 0.0f + position.y, 0.0f + position.z)) * scale(mat4(1.0f), vec3(0.1f + scaling.x, 0.1f + scaling.y, 0.1f + scaling.z)) * rotate(mat4(1.0f), radians(0.0f + rotation), vec3(0.0f, 1.0f, 0.0f));
-        orientationMatrix = rotate(mat4(1.0f), radians(0.0f + orientationRotation), vec3(0.0f + rotationAxis.x, 0.0f + rotationAxis.y, 0.0f + rotationAxis.z));
-        worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * partMatrix;
+        worldMatrix = groupMatrix * partMatrix;
 
 
         // Render shadow in 2 passes: 1- Render depth map, 2- Render scene
@@ -453,9 +445,10 @@ int main(int argc, char* argv[])
         glfwPollEvents();
 
         // Handle inputs
+
+        // Escape
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
-
 
 
         // Toggle texture 
@@ -474,8 +467,8 @@ int main(int argc, char* argv[])
                 glUniform1i(textureflag, 1);
             }
         }
-
         previousXstate = glfwGetKey(window, GLFW_KEY_X);
+
 
         // Toggle shadow
         if (previousZstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
@@ -493,8 +486,8 @@ int main(int argc, char* argv[])
                 glUniform1i(shadowflag, 1);
             }
         }
-
         previousZstate = glfwGetKey(window, GLFW_KEY_Z);
+
 
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
@@ -529,10 +522,6 @@ int main(int argc, char* argv[])
             selection = 0;
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
             selection = 1;
-        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
-            armSelection = 3;
-        if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
-            armSelection = 4;
 
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // close window
@@ -549,30 +538,6 @@ int main(int argc, char* argv[])
             fov -= 1.0f;
         }
 
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)) // camera pan
-        {
-            cameraLookAt = vec3(cosf(phi) * cosf(theta), 0.0f, -cosf(phi) * sinf(theta));
-        }
-
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE)) // camera tilt
-        {
-            cameraLookAt = vec3(0.0f, sinf(phi), -cosf(phi) * sinf(theta));
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) // reposition object randomly
-        {
-            // Providing a seed value
-            srand(time(NULL));
-
-            // Get a random number
-            int randomX = -50 + rand() % 100;
-            //int randomY = -50 + rand() % 100;
-            int randomZ = rand() % 100;
-
-            position.x = randomX;
-            //position.y = randomY;
-            position.z = randomZ;
-        }
 
         if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) // scale object up
         {
@@ -588,71 +553,35 @@ int main(int argc, char* argv[])
             scaling.z -= 0.1f;
         }
 
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move object to the left
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move object to the left
         {
-            if (armSelection == 3)
                 position.x -= 0.1f;
-            if (armSelection == 4)
-            {
-                rotationAngle = vec3(0.0f, 1.0f, 0.0f); // R-y
-                rotationU += 3.0f;
-            }
 
         }
 
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move object to the right
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move object to the right
         {
-            if (armSelection == 3)
                 position.x += 0.1f;
-            if (armSelection == 4)
-            {
-                rotationAngle = vec3(0.0f, 1.0f, 0.0f); //Ry
-                rotationU -= 3.0f;
-            }
         }
 
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move object down
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move object down
         {
-            if (armSelection == 3)
                 position.y -= 0.1f;
-            if (armSelection == 4)
-            {
-                rotationAngle = vec3(1.0f, 0.0f, 0.0f); //R-x
-                rotationU -= 3.0f;
-            }
         }
 
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move object up
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move object up
         {
-            if (armSelection == 3)
                 position.y += 0.1f;
-            if (armSelection == 4)
-            {
-                rotationAngle = vec3(1.0f, 0.0f, 0.0f); //Rx
-                rotationU += 3.0f;
-            }
         }
 
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate object to the left
         {
-            if (armSelection == 3)
                 rotation += 5.0f;
-            if (armSelection == 4)
-            {
-                rotationAngle = vec3(0.0f, 0.0f, 1.0f); //Rz
-                rotationU -= 3.0f;
-            }
         }
 
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate object to the right
         {
-            if (armSelection == 3)
                 rotation -= 5.0f;
-            if (armSelection == 4)
-            {
-                rotationAngle = vec3(0.0f, 0.0f, 1.0f); //R-z
-                rotationU += 3.0f;
-            }
         }
 
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) // reset object back to origin
@@ -665,23 +594,7 @@ int main(int argc, char* argv[])
             scaling.y = 1.0f;
             scaling.z = 1.0f;
             rotation = 0.0f;
-            rotationU = 0.0f;
 
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) // change mode to points
-        {
-            mode = GL_POINTS;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) // change mode to lines
-        {
-            mode = GL_LINES;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) // change mode to triangles
-        {
-            mode = GL_TRIANGLES;
         }
 
         if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) // zoom out
@@ -695,41 +608,11 @@ int main(int argc, char* argv[])
             fov -= 1.0f;
         }
 
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // rotate world orientation Rx
-        {
-            rotationAxis = vec3(1.0f, 0.0f, 0.0f);
-            orientationRotation += 5.0f;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // rotate world orientation R-x
-        {
-            rotationAxis = vec3(1.0f, 0.0f, 0.0f);
-            orientationRotation -= 5.0f;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // rotate world orientation Ry
-        {
-            rotationAxis = vec3(0.0f, 1.0f, 0.0f);
-            orientationRotation += 5.0f;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // rotate world orientation R-y
-        {
-            rotationAxis = vec3(0.0f, 1.0f, 0.0f);
-            orientationRotation -= 5.0f;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS) // reset world orientation
-        {
-            rotationAxis.x = 0.0f;
-            rotationAxis.y = 1.0f;
-            rotationAxis.z = 0.0f;
-            orientationRotation = 0.0f;
-        }
-
-
+        // Free camera, default
         if (selection == 0)
         {
+            
+            cameraPosition = cameraPositionWalking; 
 
             bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
             float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
@@ -768,22 +651,22 @@ int main(int argc, char* argv[])
             glm::normalize(cameraSideVector);
 
 
-            if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // move camera to the left
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
             {
                 cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
             }
 
-            if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) // move camera to the right
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
             {
                 cameraPosition += cameraSideVector * currentCameraSpeed * dt;
             }
 
-            if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) // move camera up
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera up
             {
                 cameraPosition -= cameraLookAt * currentCameraSpeed * dt;
             }
 
-            if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) // move camera down
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera down
             {
                 cameraPosition += cameraLookAt * currentCameraSpeed * dt;
             }
@@ -799,11 +682,64 @@ int main(int argc, char* argv[])
                 glm::vec3 position = cameraPosition - radius * cameraLookAt;
                 viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
             }
+
+            // Keep track of walking position for when camera is changed to birds eye
+            cameraPositionWalking = cameraPosition; 
         }
+        // Birds eye camera
+        if (selection == 1) {
+
+            cameraPosition = vec3(0.6f, 10.0f, 10.0f);
+
+            bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+            float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
+
+            double mousePosX, mousePosY;
+            glfwGetCursorPos(window, &mousePosX, &mousePosY);
+
+            double dx = mousePosX - lastMousePosX;
+            double dy = mousePosY - lastMousePosY;
+
+            lastMousePosX = mousePosX;
+            lastMousePosY = mousePosY;
+
+            // Convert to spherical coordinates
+            const float cameraAngularSpeed = 60.0f;
+            cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
+            cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+
+            // Clamp vertical angle to [-85, 85] degrees
+            cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
+            if (cameraHorizontalAngle > 360)
+            {
+                cameraHorizontalAngle -= 360;
+            }
+            else if (cameraHorizontalAngle < -360)
+            {
+                cameraHorizontalAngle += 360;
+            }
+
+            float theta = radians(cameraHorizontalAngle);
+            float phi = radians(cameraVerticalAngle);
+
+            cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
+            vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
+
+            glm::normalize(cameraSideVector);
+
+            viewMatrix = mat4(1.0);
+
+            if (cameraFirstPerson) {
+                viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
+            }
+            else {
+                float radius = 5.0f;
+                glm::vec3 position = cameraPosition - radius * cameraLookAt;
+                viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
+            }
+        }
+
     }
-
-
-
 
 
     glfwTerminate();
@@ -1043,11 +979,12 @@ int createSphereObject()
 void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID, GLuint clayTextureID, GLuint noTextureID) {
 
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
+    
     // Draw 100x100 ground grid
     for (int i = -50; i < 51; ++i)
     {
         mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f + i, -0.01f, 0.0f)) * scale(mat4(1.0f), vec3(0.05f, 0.0f, 100.0f));
-        worldMatrix = orientationMatrix * groundWorldMatrix;
+        worldMatrix = groundWorldMatrix;
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 0.0f)); // Yellow
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
@@ -1056,180 +993,59 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
     for (int j = -50; j < 51; ++j)
     {
         mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.01f, 0.0f + j)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 0.05f));
-        worldMatrix = orientationMatrix * groundWorldMatrix;
+        worldMatrix = groundWorldMatrix;
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 0.0f)); // Yellow
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
     }
 
-    // Tennis court
+    // Floor
     mat4 courtWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.09f, 0.0f)) * scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
     glBindTexture(GL_TEXTURE_2D, clayTextureID);
-    worldMatrix = orientationMatrix * courtWorldMatrix;
+    worldMatrix = courtWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Tennis green
+    SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
-    // Draw tennis ball
-    glBindVertexArray(sphereVAO);
-    glBindTexture(GL_TEXTURE_2D, tennisTextureID);
-    mat4 sphereWorldMatrix = translate(mat4(1.0f), vec3(2.0f, 4.0f, 0.0f)) * scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.5f));
-    worldMatrix = orientationMatrix * sphereWorldMatrix;
+    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
+    // Draw tree
+    // Trunk
+    mat4 treeWorldMatrix = translate(mat4(1.0f), vec3(5.0f, 2.5f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, 5.0f, 1.0f));
+    worldMatrix = groupMatrix * treeWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.824f, 1.0f, 0.396f)); // Yellow-green
-    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    SetUniformVec3(shader, "object_color", vec3(0.33f, 0.2f, 0.05f)); // Brown
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
-    // back to cubes
-    glBindVertexArray(texturedCubeVAO);
+    // Leaves
+    treeWorldMatrix = translate(mat4(1.0f), vec3(5.0f, 5.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
+    worldMatrix = groupMatrix * treeWorldMatrix;
+    setWorldMatrix(shader, worldMatrix);
+    SetUniformVec3(shader, "object_color", vec3(0.18f, 0.33f, 0.15f)); // Green
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
     // Draw coordinate axis
-    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
-// X axis
+    // X axis
     mat4 axisWorldMatrix = translate(mat4(1.0f), vec3(1.5f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(3.0f, 0.1f, 0.1f));
-    worldMatrix = orientationMatrix * axisWorldMatrix;
+    worldMatrix = axisWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(1.0f, 0.0f, 0.0f)); // Blue
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // Y axis
     axisWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 1.5f, 0.0f)) * scale(mat4(1.0f), vec3(0.1f, 3.0f, 0.1f));
-    worldMatrix = orientationMatrix * axisWorldMatrix;
+    worldMatrix = axisWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // Z axis
     axisWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 1.5f)) * scale(mat4(1.0f), vec3(0.1f, 0.1f, 3.0f));
-    worldMatrix = orientationMatrix * axisWorldMatrix;
+    worldMatrix = axisWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.0f, 0.0f, 1.0f)); // Red
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
-    // Draw hand
-
-    // Bicep
-    mat4 armWorldMatrix = translate(mat4(1.0f), vec3(-0.7f, 2.65f, 0.0f)) * rotate(mat4(1.0f), radians(-55.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.5f, 2.0f, 0.5f));
-    worldMatrix = orientationMatrix * groupMatrix * armWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.9f, 0.85f, 0.63f)); // Skin
-    glDrawArrays(mode, 0, 36);
-
-
-    // Forearm (hand)
-    armWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(0.5f, 2.0f, 0.5f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * armWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.9f, 0.85f, 0.63f)); // Skin
-    glDrawArrays(mode, 0, 36);
-
-
-    // Draw racket 
-    glBindTexture(GL_TEXTURE_2D, glossyTextureID);
-    // Handle
-    mat4 racketWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 3.0f, 0.0f)) * scale(mat4(1.0f), vec3(0.2f, 2.0f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-    // Right Side
-    racketWorldMatrix = translate(mat4(1.0f), vec3(0.58f, 4.3f, 0.0f)) * rotate(mat4(1.0f), radians(-50.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 1.5f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 1.0f)); // White
-    glDrawArrays(mode, 0, 36);
-
-    // Left Side
-    racketWorldMatrix = translate(mat4(1.0f), vec3(-0.58f, 4.3f, 0.0f)) * rotate(mat4(1.0f), radians(50.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 1.5f, 0.19f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 1.0f)); // White
-    glDrawArrays(mode, 0, 36);
-
-    // Right Side vertical
-    racketWorldMatrix = translate(mat4(1.0f), vec3(1.15f, 5.72f, 0.0f)) * scale(mat4(1.0f), vec3(0.2f, 2.05f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-    // Left Side vertical
-    racketWorldMatrix = translate(mat4(1.0f), vec3(-1.15f, 5.72f, 0.0f)) * scale(mat4(1.0f), vec3(0.2f, 2.05f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-
-    // Left Side top
-    racketWorldMatrix = translate(mat4(1.0f), vec3(-1.0f, 6.8f, 0.0f)) * rotate(mat4(1.0f), radians(-50.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 0.5f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 1.0f)); // White
-    glDrawArrays(mode, 0, 36);
-
-    // Right Side top
-    racketWorldMatrix = translate(mat4(1.0f), vec3(1.0f, 6.8f, 0.0f)) * rotate(mat4(1.0f), radians(50.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 0.5f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 1.0f)); // White
-    glDrawArrays(mode, 0, 36);
-
-    // Left Side top 2
-    racketWorldMatrix = translate(mat4(1.0f), vec3(-0.64f, 7.05f, 0.0f)) * rotate(mat4(1.0f), radians(-60.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 0.37f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-    // Right Side top 2
-    racketWorldMatrix = translate(mat4(1.0f), vec3(0.64f, 7.05f, 0.0f)) * rotate(mat4(1.0f), radians(60.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 0.37f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-
-    // Horizontal
-    racketWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 4.45f, 0.0f)) * rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 1.4f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-
-    // Horizontal top
-    racketWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 7.1f, 0.0f)) * rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 0.0f, 1.0f)) * scale(mat4(1.0f), vec3(0.2f, 1.1f, 0.2f));
-    worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * racketWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.7f, 0.05f, 0.05f)); // Dark red
-    glDrawArrays(mode, 0, 36);
-
-    // Draw Net
-
-
-    // Vertical
-    for (int i = -5; i < 5; ++i)
-    {
-        mat4 netWorldMatrix = translate(mat4(1.0f), vec3(0.1f + (0.2 * i), 5.72f, 0.0f)) * scale(mat4(1.0f), vec3(0.03f, 2.55f, 0.0f));
-        worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * netWorldMatrix;
-        setWorldMatrix(shader, worldMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.52f, 0.9f, 0.61f)); // Light green
-        glDrawArrays(mode, 0, 36);
-    }
-
-    // Horizontal
-    for (int j = -5; j < 6; ++j)
-    {
-        mat4 netWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 5.72f + (0.2 * j), 0.0f)) * scale(mat4(1.0f), vec3(2.5f, 0.0f, 0.03f));
-        worldMatrix = orientationMatrix * groupMatrix * upperArmMatrix * netWorldMatrix;
-        setWorldMatrix(shader, worldMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.52f, 0.9f, 0.61f)); // Light green
-        glDrawArrays(mode, 0, 36);
-    }
 
 }

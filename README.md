@@ -1,4 +1,4 @@
-# Assignment 2 - Tennis Ball and Rendering
+# COMP 371 Project - Procedurally Generated Terrain 
 
 ## Build Instructions
 ### Command Line
@@ -13,38 +13,25 @@ cmake -S . -B <build_folder>
 cmake --build <build_folder> --target install
 ```
 
-###Features
-SPACE = translate model to random location on grid
-U = scale model up
-J = scale model down
-W = translate model up
-A = translate model left
-S = translate model down
-D = translate model right
-Q = rotate model counterclockwise
-E = rotate model clockwise
-R = reset model back to origin
-P = switch rendering mode to points
-L = switch rendering mode to lines
-T = switch rendering mode to triangles
-Hold right mouse button and move mouse to pan camera left or right
-Hold middle mouse button and move mouse to tilt camera up or down
-Hold left mouse button and move mouse to zoom in or out (can also use M or N keys)
-M = zoom camera out
-N = zoom camera in
-Left arrow = rotate world orientation Rx
-Right arrow = rotate world orientation R-x
-Up arrow = rotate world orientation Ry
-Down arrow = rotate world orientation R-y
-
-1 = fixed camera (default)
-0 = free camera
-
-F = move camera forward
-C = move camera left
-V = move camera backwards
-B = move camera right
-
-X = toggle textures 
-Z = toggle shadows
+## Features
+### Transformations
+- Up arrow = translate model up
+- Left arrow = translate model left
+- Down arrow = translate model down
+- Right arrow = translate model right
+- U = scale model up
+- J = scale model down
+- Q = rotate model counterclockwise
+- E = rotate model clockwise
+- R = reset model back to origin
+### Movement
+- W = move camera forward
+- A = move camera left
+- S = move camera backwards
+- D = move camera right
+### Toggles
+- X = toggle textures 
+- Z = toggle shadows
+- 0 = free camera (ground)
+- 1 = fixed camera (birds eye)
 

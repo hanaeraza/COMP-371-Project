@@ -74,7 +74,11 @@ float shadow_scalar() {
     float current_depth = normalized_device_coordinates.z;
     // check whether current frag pos is in shadow
     float bias = 0.003;  // bias applied in depth map: see shadow_vertex.glsl
-    return ((current_depth - bias) < closest_depth) ? 1.0 : 0.0;
+    float shadow = ((current_depth - bias) < closest_depth) ? 1.0 : 0.0;
+
+    if(normalized_device_coordinates.z > 1.0)
+        shadow = 0.0;
+    return shadow;
 }
 
 float spotlight_scalar() {
