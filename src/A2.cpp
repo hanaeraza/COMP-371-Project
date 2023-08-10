@@ -206,6 +206,10 @@ int main(int argc, char *argv[]) {
     };
     GLuint cubemapTexture = loadCubemap(skyFaces);
     
+    glUseProgram(shaderSkybox);
+    vec3 lightColor = vec3(1.0f, 1.0f, 1.0f); // Used for both the scene shader and the skybox shader
+    SetUniformVec3(shaderSkybox, "lightColor", lightColor);
+    
     glUseProgram(shaderScene);
     GLuint textureflag = glGetUniformLocation(shaderScene, "useTexture");
     GLint p_array[1];
@@ -305,7 +309,7 @@ int main(int argc, char *argv[]) {
     SetUniform1fValue(shaderScene, "light_cutoff_outer", cos(radians(lightAngleOuter)));
     
     // Set light color on scene shader
-    SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
+    SetUniformVec3(shaderScene, "light_color", lightColor);
     
     // Set object color on scene shader
     SetUniformVec3(shaderScene, "object_color", vec3(1.0, 1.0, 1.0));
