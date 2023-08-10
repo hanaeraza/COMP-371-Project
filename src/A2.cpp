@@ -1065,25 +1065,6 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
     
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
-    // Draw 100x100 ground grid
-    for (int i = -50; i < 51; ++i) {
-        mat4 groundWorldMatrix =
-                translate(mat4(1.0f), vec3(0.0f + i, -0.01f, 0.0f)) * scale(mat4(1.0f), vec3(0.05f, 0.0f, 100.0f));
-        worldMatrix = groundWorldMatrix;
-        setWorldMatrix(shader, worldMatrix);
-        SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 0.0f)); // Yellow
-        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
-    }
-    
-    for (int j = -50; j < 51; ++j) {
-        mat4 groundWorldMatrix =
-                translate(mat4(1.0f), vec3(0.0f, -0.01f, 0.0f + j)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 0.05f));
-        worldMatrix = groundWorldMatrix;
-        setWorldMatrix(shader, worldMatrix);
-        SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 0.0f)); // Yellow
-        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
-    }
-    
     // Floor
     mat4 courtWorldMatrix =
             translate(mat4(1.0f), vec3(0.0f, -0.09f, 0.0f)) * scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
