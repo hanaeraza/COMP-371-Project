@@ -166,10 +166,10 @@ void setViewMatrix(int shaderProgram, mat4 viewMatrix) {
     glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
 }
 
-void setWorldMatrix(int shaderProgram, mat4 worldMatrix) {
+void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
     glUseProgram(shaderProgram);
     GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "model_matrix");
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &_worldMatrix[0][0]);
 }
 
 int main(int argc, char *argv[]) {
@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
         SetUniformMat4(shaderShadow, "model_matrix", modelMatrix);
         
         // Set the view matrix for first person camera and send to both shaders
-        mat4 viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
+        viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
         SetUniformMat4(shaderScene, "view_matrix", viewMatrix);
         
         // Set view position on scene shader
@@ -636,8 +636,8 @@ int main(int argc, char *argv[]) {
             
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
-            double dx = mousePosX - lastMousePosX;
-            double dy = mousePosY - lastMousePosY;
+            dx = mousePosX - lastMousePosX;
+            dy = mousePosY - lastMousePosY;
             
             lastMousePosX = mousePosX;
             lastMousePosY = mousePosY;
@@ -654,8 +654,8 @@ int main(int argc, char *argv[]) {
                 cameraHorizontalAngle += 360;
             }
             
-            float theta = radians(cameraHorizontalAngle);
-            float phi = radians(cameraVerticalAngle);
+            theta = radians(cameraHorizontalAngle);
+            phi = radians(cameraVerticalAngle);
             
             cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
             vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
@@ -690,7 +690,7 @@ int main(int argc, char *argv[]) {
                 viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
             } else {
                 float radius = 5.0f;
-                glm::vec3 position = cameraPosition - radius * cameraLookAt;
+                position = cameraPosition - radius * cameraLookAt;
                 viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
             }
             
@@ -708,8 +708,8 @@ int main(int argc, char *argv[]) {
             
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
-            double dx = mousePosX - lastMousePosX;
-            double dy = mousePosY - lastMousePosY;
+            dx = mousePosX - lastMousePosX;
+            dy = mousePosY - lastMousePosY;
             
             lastMousePosX = mousePosX;
             lastMousePosY = mousePosY;
@@ -726,8 +726,8 @@ int main(int argc, char *argv[]) {
                 cameraHorizontalAngle += 360;
             }
             
-            float theta = radians(cameraHorizontalAngle);
-            float phi = radians(cameraVerticalAngle);
+            theta = radians(cameraHorizontalAngle);
+            phi = radians(cameraVerticalAngle);
             
             cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
             vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
@@ -740,7 +740,7 @@ int main(int argc, char *argv[]) {
                 viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
             } else {
                 float radius = 5.0f;
-                glm::vec3 position = cameraPosition - radius * cameraLookAt;
+                position = cameraPosition - radius * cameraLookAt;
                 viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
             }
         }
