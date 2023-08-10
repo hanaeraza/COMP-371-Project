@@ -20,7 +20,15 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "..\ThirdParty\stb_image.h"
+
+#include <stb_image.h>
+
+#if defined(__APPLE__)
+std::string pathPrefix = "../";
+#else
+string pathPrefix = "";
+#endif
+
 
 using namespace glm;
 using namespace std;
@@ -43,7 +51,13 @@ float rotX = 0.0f;
 int camNum = 3;
 int carLight = 0;
 
+// window dimensions
+const GLuint WIDTH = 1024, HEIGHT = 768;
+
 int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource);
+
+GLFWwindow* window = nullptr;
+bool InitContext();
 
 struct TexturedColoredVertex
 {
@@ -408,41 +422,16 @@ int previousXstate = GLFW_RELEASE;
 
 int main(int argc, char* argv[])
 {
-    // Initialize GLFW and OpenGL version
-    glfwInit();
-    
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    
-    // Create Window and rendering context using GLFW, resolution is 1024x768
-    GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - Assignment 02", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwMakeContextCurrent(window);
-    
-    // Initialize GLEW
-    glewExperimental = true; // Needed for core profile
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to create GLEW" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
+    if (!InitContext()) return -1;
     
     // Load Textures
-    GLuint bushTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/bush.jpg");
-    GLuint leavesTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/leaves.png");
-    GLuint woodTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/wood.jpg");
-    GLuint roadTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/road.jpg");
-    GLuint dirtTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/dirt.png");
-    GLuint carTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/car.jpg");
-    GLuint tireTextureID = loadTexture("C:/Users/sophi/Desktop/testfinal/A1_Framework/Assets/Textures/tire.jpg");
+    GLuint bushTextureID = loadTexture((pathPrefix + "Assets/Textures/bush.jpg").c_str());
+    GLuint leavesTextureID = loadTexture((pathPrefix + "Assets/Textures/leaves.png").c_str());
+    GLuint woodTextureID = loadTexture((pathPrefix + "Assets/Textures/wood.jpg").c_str());
+    GLuint roadTextureID = loadTexture((pathPrefix + "Assets/Textures/road.jpg").c_str());
+    GLuint dirtTextureID = loadTexture((pathPrefix + "Assets/Textures/dirt.png").c_str());
+    GLuint carTextureID = loadTexture((pathPrefix + "Assets/Textures/car.jpg").c_str());
+    GLuint tireTextureID = loadTexture((pathPrefix + "Assets/Textures/tire.jpg").c_str());
     
     
     
@@ -1839,4 +1828,44 @@ int createSphereObject()
     glBindVertexArray(0); // Unbind to not modify the VAO
     
     return vaos;
+}
+
+
+
+bool InitContext()
+{
+    // Initialize GLFW and OpenGL version
+    glfwInit();
+
+#if defined(__APPLE__)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
+    // On windows, we set OpenGL version to 2.1, to support more hardware
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#endif
+    
+    // Create Window and rendering context using GLFW, resolution is 800x600
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Comp371 - Lab 08", NULL, NULL);
+    if (window == NULL) {
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return false;
+    }
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwMakeContextCurrent(window);
+    
+    
+    // Initialize GLEW
+    glewExperimental = true; // Needed for core profile
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to create GLEW" << std::endl;
+        glfwTerminate();
+        return false;
+    }
+    
+    return true;
 }
