@@ -178,19 +178,19 @@ int main(int argc, char* argv[])
     // background
     glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
 
-    std::string shaderPathPrefix = "assets/shaders/";
+    std::string shaderPathPrefix = "../assets/shaders/";
 
     GLuint shaderScene = loadSHADER(shaderPathPrefix + "scene_vertex.glsl", shaderPathPrefix + "scene_fragment.glsl");
 
     GLuint shaderShadow = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl", shaderPathPrefix + "shadow_fragment.glsl");
 
     // Load Textures
-    GLuint brickTextureID = loadTexture("assets/textures/brick.jpg");
-    GLuint cementTextureID = loadTexture("assets/textures/cement.jpg");
-    GLuint tennisTextureID = loadTexture("assets/textures/tennisball.jpg");
-    GLuint glossyTextureID = loadTexture("assets/textures/glossy2.jpg");
-    GLuint clayTextureID = loadTexture("assets/textures/clay3.jpg");
-    GLuint noTextureID = loadTexture("assets/textures/white.jpg");
+    GLuint brickTextureID = loadTexture("../assets/textures/brick.jpg");
+    GLuint cementTextureID = loadTexture("../assets/textures/cement.jpg");
+    GLuint tennisTextureID = loadTexture("../assets/textures/tennisball.jpg");
+    GLuint glossyTextureID = loadTexture("../assets/textures/glossy2.jpg");
+    GLuint clayTextureID = loadTexture("../assets/textures/clay3.jpg");
+    GLuint noTextureID = loadTexture("../assets/textures/white.jpg");
 
     glUseProgram(shaderScene);
     GLuint textureflag = glGetUniformLocation(shaderScene, "useTexture");
