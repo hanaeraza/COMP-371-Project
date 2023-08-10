@@ -1,9 +1,7 @@
 // Assignment 2
 
 #include <iostream>
-#include <list>
 #include <algorithm>
-#include <time.h>
 #include <vector>
 
 
@@ -16,7 +14,6 @@
 
 #include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
 #include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
-#include <glm/common.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shaderloader.h"
@@ -637,7 +634,6 @@ int main(int argc, char *argv[]) {
                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
             float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
             
-            double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
             double dx = mousePosX - lastMousePosX;
@@ -647,7 +643,6 @@ int main(int argc, char *argv[]) {
             lastMousePosY = mousePosY;
             
             // Convert to spherical coordinates
-            const float cameraAngularSpeed = 60.0f;
             cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
             cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
             
@@ -711,7 +706,6 @@ int main(int argc, char *argv[]) {
                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
             float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
             
-            double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
             double dx = mousePosX - lastMousePosX;
@@ -721,7 +715,6 @@ int main(int argc, char *argv[]) {
             lastMousePosY = mousePosY;
             
             // Convert to spherical coordinates
-            const float cameraAngularSpeed = 60.0f;
             cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
             cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
             
@@ -867,7 +860,7 @@ GLuint loadCubemap(vector<std::string> faces) {
     return textureID;
 }
 
-// Generates VAO & VBO for the skybox/cubemap. Returns VBO identifier
+// Generates VAO & VBO for the skybox/cubemap and returns VAO identifier
 GLuint createSkyboxObject() {
     float skyboxVertices[] = {
             // positions
@@ -924,7 +917,7 @@ GLuint createSkyboxObject() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
     
     return skyboxVAO;
-};
+}
 
 int createTexturedCubeVAO() {
     // Create a vertex array
