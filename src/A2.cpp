@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
     if (!InitContext()) return -1;
 
     // background
-    glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
+    //glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
 
     std::string shaderPathPrefix = "assets/shaders/";
 
@@ -291,6 +291,7 @@ int main(int argc, char* argv[])
 
     // Set light color on scene shader
     SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
+    SetUniformVec3(shaderScene, "fog_light_color", vec3(1.0, 1.0, 1.0));
 
     // Set object color on scene shader
     SetUniformVec3(shaderScene, "object_color", vec3(1.0, 1.0, 1.0));
@@ -331,8 +332,11 @@ int main(int argc, char* argv[])
 
         // light parameters
         vec3 lightPosition = vec3(1.0f, 20.0f, 5.0f); // the location of the light in 3D space
+        vec3 fogLightPosition = cameraPosition; // the location of the light in 3D space
         vec3 lightFocus(0.0, -1.0, 0.0);      // the point in 3D space the light "looks" at
-        vec3 lightDirection = normalize(lightFocus - lightPosition);
+        //vec3 lightDirection = normalize(lightFocus - lightPosition);
+        vec3 lightDirection = vec3(-0.2f, -1.0f, -0.3f);
+        vec3 fogLightDirection = normalize(lightFocus - fogLightPosition); 
 
         float lightNearPlane = 1.0f;
         float lightFarPlane = 180.0f;
@@ -352,9 +356,11 @@ int main(int argc, char* argv[])
 
         // Set light position on scene shader
         SetUniformVec3(shaderScene, "light_position", lightPosition);
+        SetUniformVec3(shaderScene, "fog_light_position", fogLightPosition);
 
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
+        SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
 
 
         // Set model matrix and send to both shaders
@@ -415,7 +421,7 @@ int main(int argc, char* argv[])
             // Bind screen as output framebuffer
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             // Clear color and depth data on framebuffer
-            glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+            glClearColor(0.05f, 0.07f, 0.11f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             // Bind depth map texture: not needed, by default it is active
             //glActiveTexture(GL_TEXTURE0);
@@ -445,7 +451,7 @@ int main(int argc, char* argv[])
         glfwPollEvents();
 
         // Handle inputs
-
+{
         // Escape
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
@@ -738,6 +744,7 @@ int main(int argc, char* argv[])
                 viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
             }
         }
+}
 
     }
 
@@ -977,34 +984,24 @@ int createSphereObject()
 
 
 void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID, GLuint clayTextureID, GLuint noTextureID) {
-
-    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
-    // Draw 100x100 ground grid
-    for (int i = -50; i < 51; ++i)
-    {
-        mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f + i, -0.01f, 0.0f)) * scale(mat4(1.0f), vec3(0.05f, 0.0f, 100.0f));
-        worldMatrix = groundWorldMatrix;
-        setWorldMatrix(shader, worldMatrix);
-        SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 0.0f)); // Yellow
-        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
-    }
-
-    for (int j = -50; j < 51; ++j)
-    {
-        mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.01f, 0.0f + j)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 0.05f));
-        worldMatrix = groundWorldMatrix;
-        setWorldMatrix(shader, worldMatrix);
-        SetUniformVec3(shader, "object_color", vec3(1.0f, 1.0f, 0.0f)); // Yellow
-        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
-    }
+    
+    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
 
     // Floor
-    mat4 courtWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.09f, 0.0f)) * scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
+    mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(100.0f, 0.1f, 300.0f));
     glBindTexture(GL_TEXTURE_2D, clayTextureID);
-    worldMatrix = courtWorldMatrix;
+    worldMatrix = groundWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // Road
+    groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(10.0f, 0.3f, 300.0f));
+    glBindTexture(GL_TEXTURE_2D, clayTextureID);
+    worldMatrix = groundWorldMatrix;
+    setWorldMatrix(shader, worldMatrix);
+    SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
@@ -1026,6 +1023,7 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
 
 
     // Draw coordinate axis
+    /*
     // X axis
     mat4 axisWorldMatrix = translate(mat4(1.0f), vec3(1.5f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(3.0f, 0.1f, 0.1f));
     worldMatrix = axisWorldMatrix;
@@ -1046,6 +1044,6 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.0f, 0.0f, 1.0f)); // Red
     glDrawArrays(GL_TRIANGLES, 0, 36);
-
+*/
 
 }
