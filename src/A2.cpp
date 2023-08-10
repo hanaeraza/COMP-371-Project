@@ -194,11 +194,11 @@ int main(int argc, char* argv[])
 
     glUseProgram(shaderScene);
     GLuint textureflag = glGetUniformLocation(shaderScene, "useTexture");
-    GLint p_array[1]{};
+    GLint p_array[1];
     GLint* currentvalue = p_array;
 
     GLuint shadowflag = glGetUniformLocation(shaderScene, "useShadow");
-    GLint p_arrayS[1]{};
+    GLint p_arrayS[1];
     GLint* currentvalueS = p_arrayS;
 
 
