@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
     // Other camera parameters
-    float cameraSpeed = 3.0f;
+    float cameraSpeed = 5.0f;
     float cameraFastSpeed = 2 * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
@@ -660,22 +660,34 @@ int main(int argc, char* argv[])
             if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
             {
                 cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
+                cameraPosition.y = 3.0f;
             }
 
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
             {
+
                 cameraPosition += cameraSideVector * currentCameraSpeed * dt;
+                cameraPosition.y = 3.0f;
+                
             }
 
-            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera up
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
             {
                 cameraPosition -= cameraLookAt * currentCameraSpeed * dt;
+                cameraPosition.y = 3.0f;
             }
 
-            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera down
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
             {
                 cameraPosition += cameraLookAt * currentCameraSpeed * dt;
+                cameraPosition.y = 3.0f;
             }
+
+            // walking boundaries
+            if (cameraPosition.x > 5.0f)
+                cameraPosition.x = 5.0f; 
+            if (cameraPosition.x < -5.0f)
+                cameraPosition.x = -5.0f; 
 
 
             viewMatrix = mat4(1.0);
