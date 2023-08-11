@@ -11,7 +11,7 @@ uniform sampler2D textureSampler;
 uniform int useTexture = 0;
 uniform int useShadow = 0; 
 
-const float shading_ambient_strength    = 0.5;
+const float shading_ambient_strength    = 1.0;
 const float shading_diffuse_strength    = 0.7;
 const float shading_specular_strength   = 0.3;
 
@@ -124,7 +124,7 @@ void main()
         diffuse = scalar * diffuse_colorFlat(light_color, light_position) * attenuation;
         specular = scalar * specular_color(light_color, light_position) * attenuation; 
    
-        color = (specular + diffuse + ambient) * object_color;
+        color = /*(specular + diffuse + ambient) **/ object_color;
    }
 // press X: textured
    else {
@@ -132,7 +132,7 @@ void main()
         diffuse = scalar * diffuse_color(light_color, light_position) * attenuation;
         specular = scalar * specular_color(light_color, light_position) * attenuation;
        
-        color = (specular + diffuse + ambient) * object_color;
+        color = /*(specular + diffuse + ambient) **/ object_color;
    }
     
     
