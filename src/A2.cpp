@@ -78,12 +78,10 @@ struct WorldChunk {
     
     float chunkPositionZ;
     int chunkPositionID;
-    bool movingForward;
     
-    explicit WorldChunk(int chunkPositionID, bool movingForward) : chunkPositionID(chunkPositionID),
-                                                                   movingForward(movingForward) {
-//        generateTrees(1);
+    explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
+        generateTrees(50);
     };
     
     bool insertTree(TreePosition tree) {
@@ -95,16 +93,16 @@ struct WorldChunk {
             return false;
         }
         
-        int treeWidth = 4;
-        int treeDepth = 4;
+        int treeWidth = 12;
+        int treeDepth = 12;
         int offsetX = treeWidth / 2 + 1;
         int offsetZ = treeDepth / 2 + 1;
         
-        x = static_cast<int>(tree.x) - offsetX;
-        z = static_cast<int>(tree.z) - offsetZ;
+        x -= offsetX;
+        z -= offsetZ;
         
         for (; x < offsetX * 2; x++) {
-            for (; z < offsetZ * 2; x++) {
+            for (; z < offsetZ * 2; z++) {
                 occupiedGrids.insert(make_pair(x, z));
             }
         }
@@ -117,9 +115,6 @@ struct WorldChunk {
     void generateTrees(int numOfTrees) {
         while (numOfTrees != 0) {
             bool treeInserted = insertTree(TreePosition(chunkPositionZ));
-            while (!treeInserted) {
-                treeInserted = insertTree(TreePosition(chunkPositionZ));
-            }
             numOfTrees--;
         }
     }
@@ -143,7 +138,7 @@ GLuint loadCubemap(vector<std::string> faces);
 GLuint createSkyboxObject();
 
 void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ, bool movingForward);
+                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -374,13 +369,14 @@ int main(int argc, char *argv[]) {
     
     
     // Camera parameters for view transform
-    vec3 cameraPosition(0.6f, 3.0f, 10.0f);
-    vec3 cameraPositionWalking(0.6f, 3.0f, 10.0f);
+    // The perfomance slows when cameraPos holds negative values, hence why it's fairly big
+    vec3 cameraPosition(0.6f, 3.0f, 2000.0f);
+    vec3 cameraPositionWalking(0.6f, 3.0f, 2000.0f);
     vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
     
     // Other camera parameters
-    float cameraSpeed = 3.0f;
+    float cameraSpeed = 12.0f;
     float cameraFastSpeed = 2 * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
@@ -438,11 +434,6 @@ int main(int argc, char *argv[]) {
     glBindVertexArray(vao);
     int previousXstate = GLFW_RELEASE;
     int previousZstate = GLFW_RELEASE;
-    
-    // Keep track of camera displacement direction (in z axis) for procedural generation
-    float lastZ = cameraPosition.z;
-    float currentZ;
-    bool movingForward;
     
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
@@ -530,7 +521,7 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderShadow, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID,
-                        cameraPosition.z, movingForward);
+                        cameraPosition.z);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -569,7 +560,7 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderScene, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID,
-                        cameraPosition.z, movingForward);
+                        cameraPosition.z);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -746,9 +737,6 @@ int main(int argc, char *argv[]) {
         if (selection == 0) {
             
             cameraPosition = cameraPositionWalking;
-            currentZ = cameraPosition.z;
-            movingForward = lastZ - currentZ >= 0;
-            lastZ = currentZ;
             
             bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
@@ -786,36 +774,24 @@ int main(int argc, char *argv[]) {
             if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
             {
                 cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
-                currentZ = cameraPosition.z;
-                movingForward = lastZ - currentZ >= 0;
-                lastZ = currentZ;
             }
             
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
             {
                 cameraPosition += cameraSideVector * currentCameraSpeed * dt;
-                currentZ = cameraPosition.z;
-                movingForward = lastZ - currentZ >= 0;
-                lastZ = currentZ;
             }
             
             if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera up
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition -= moveDirection * currentCameraSpeed * dt;
-                currentZ = cameraPosition.z;
-                movingForward = lastZ - currentZ >= 0;
-                lastZ = currentZ;
             }
             
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera down
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition += moveDirection * currentCameraSpeed * dt;
-                currentZ = cameraPosition.z;
-                movingForward = lastZ - currentZ >= 0;
-                lastZ = currentZ;
-                cout << cameraPosition.z << "\n";
+                cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
             }
             
             
@@ -836,9 +812,6 @@ int main(int argc, char *argv[]) {
         if (selection == 1) {
             
             cameraPosition = vec3(0.6f, 10.0f, 10.0f);
-            currentZ = cameraPosition.z;
-            movingForward = lastZ - currentZ >= 0;
-            lastZ = currentZ;
             
             bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
@@ -1193,23 +1166,26 @@ int createSphereObject() {
     return sphereVAO;
 }
 
+int lastChunkID = -100;
 
 void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ, bool movingForward) {
+                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ) {
     
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
     
-    // Render two chunks in front and one in the back for good perfomance / seamlessness balance
-    int endID = movingForward ? currentChunkID + 2 : currentChunkID + 1;
+    if (lastChunkID != currentChunkID) {
+        cout << "CHANGED ID: " << currentChunkID << "\n";
+    }
+    lastChunkID = currentChunkID;
     
-    // Only 4 chunks in total are rendered each frame
-    for (int i = endID - 3; i <= endID; i++) {
-        
+    // Only 5 chunks in total are rendered each frame (number of chunks needs to be odd for proper positioning)
+    for (int i = currentChunkID - 2; i <= currentChunkID + 2; i++) {
         // All previously rendered chunks are saved to be able to go back to same scene
         if (!chunksByPosition.contains(i)) {
-            chunksByPosition.insert(make_pair(i, WorldChunk(i, movingForward)));
+            cout << "POPULATED ID: " << i << "\n";
+            chunksByPosition.insert(make_pair(i, WorldChunk(i)));
         }
         
         WorldChunk chunk = chunksByPosition.at(i);
@@ -1221,46 +1197,27 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        for (auto tree: chunk.treeData) {
+            glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
+            // Draw tree
+            // Trunk
+            mat4 treeWorldMatrix =
+                    translate(mat4(1.0f), vec3(tree.x, 2.5f, tree.z)) * scale(mat4(1.0f), vec3(1.0f, 5.0f, 1.0f));
+            worldMatrix = treeWorldMatrix;
+            setWorldMatrix(shader, worldMatrix);
+            SetUniformVec3(shader, "object_color", vec3(0.33f, 0.2f, 0.05f)); // Brown
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            
+            // Leaves
+            treeWorldMatrix =
+                    translate(mat4(1.0f), vec3(tree.x, 5.0f, tree.z)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
+            worldMatrix = treeWorldMatrix;
+            setWorldMatrix(shader, worldMatrix);
+            SetUniformVec3(shader, "object_color", vec3(0.18f, 0.33f, 0.15f)); // Green
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            
+        }
     }
-    
-    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
-    // Draw tree
-    // Trunk
-    mat4 treeWorldMatrix = translate(mat4(1.0f), vec3(5.0f, 2.5f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, 5.0f, 1.0f));
-    worldMatrix = groupMatrix * treeWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.33f, 0.2f, 0.05f)); // Brown
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    
-    // Leaves
-    treeWorldMatrix = translate(mat4(1.0f), vec3(5.0f, 5.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
-    worldMatrix = groupMatrix * treeWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.18f, 0.33f, 0.15f)); // Green
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    
-    // Draw coordinate axis
-    // X axis
-    mat4 axisWorldMatrix =
-            translate(mat4(1.0f), vec3(1.5f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(3.0f, 0.1f, 0.1f));
-    worldMatrix = axisWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(1.0f, 0.0f, 0.0f)); // Blue
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    
-    // Y axis
-    axisWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 1.5f, 0.0f)) * scale(mat4(1.0f), vec3(0.1f, 3.0f, 0.1f));
-    worldMatrix = axisWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    
-    // Z axis
-    axisWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 1.5f)) * scale(mat4(1.0f), vec3(0.1f, 0.1f, 3.0f));
-    worldMatrix = axisWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.0f, 0.0f, 1.0f)); // Red
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    
     
 }
