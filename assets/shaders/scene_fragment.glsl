@@ -148,7 +148,7 @@ void main()
 // press X: textured
    else {
         // directional light
-        ambient = ambient_color(light_color, shading_ambient_strength);
+        ambient = ambient_color(light_color, shading_ambient_strength) * attenuation;
         diffuse = scalar * diffuse_color(light_color, light_position, shading_diffuse_strength, normalize(-light_direction)) * attenuation;
         specular = scalar * specular_color(light_color, light_position, shading_specular_strength, normalize(-light_direction)) * attenuation; 
         lightColor = specular + diffuse + ambient; 

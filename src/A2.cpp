@@ -22,6 +22,12 @@
 
 #include <stb_image.h>
 
+#if defined(__APPLE__)
+string pathPrefix = "../";
+#else
+string pathPrefix = "";
+#endif
+
 using namespace glm;
 using namespace std;
 
@@ -37,8 +43,7 @@ GLuint loadCubemap(vector<std::string> faces);
 
 GLuint createSkyboxObject();
 
-void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID);
+void renderScene(GLuint shader, int texturedCubeVAO, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -178,7 +183,7 @@ int main(int argc, char *argv[]) {
     // background
     //glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
 
-    std::string shaderPathPrefix = "assets/shaders/";
+    std::string shaderPathPrefix = pathPrefix + "assets/shaders/";
 
     GLuint shaderScene = loadSHADER(shaderPathPrefix + "scene_vertex.glsl", shaderPathPrefix + "scene_fragment.glsl");
     
@@ -189,20 +194,19 @@ int main(int argc, char *argv[]) {
                                      shaderPathPrefix + "skybox.frag");
     
     // Load Textures
-    GLuint brickTextureID = loadTexture("../assets/textures/brick.jpg");
-    GLuint cementTextureID = loadTexture("../assets/textures/cement.jpg");
-    GLuint tennisTextureID = loadTexture("../assets/textures/tennisball.jpg");
-    GLuint glossyTextureID = loadTexture("../assets/textures/glossy2.jpg");
-    GLuint clayTextureID = loadTexture("../assets/textures/clay3.jpg");
-    GLuint noTextureID = loadTexture("../assets/textures/white.jpg");
+    GLuint stoneTextureID = loadTexture((pathPrefix + "assets/textures/cobblestone.jpg").c_str());
+    GLuint grassTextureID = loadTexture((pathPrefix + "assets/textures/grass.jpg").c_str());
+    GLuint leavesTextureID = loadTexture((pathPrefix + "assets/textures/leaves.jpg").c_str());
+    GLuint barkTextureID = loadTexture((pathPrefix + "assets/textures/bark.jpg").c_str());
+    GLuint noTextureID = loadTexture((pathPrefix + "assets/textures/white.jpg").c_str());
     
     vector<std::string> skyFaces{
-            "../assets/textures/skybox/px.jpg",  // right
-            "../assets/textures/skybox/nx.jpg",  // left
-            "../assets/textures/skybox/py.jpg",  // top
-            "../assets/textures/skybox/ny.jpg",  // bottom
-            "../assets/textures/skybox/pz.jpg",  // front
-            "../assets/textures/skybox/nz.jpg"   // back
+            pathPrefix + "assets/textures/skybox/px.jpg",  // right
+            pathPrefix + "assets/textures/skybox/nx.jpg",  // left
+            pathPrefix + "assets/textures/skybox/py.jpg",  // top
+            pathPrefix + "assets/textures/skybox/ny.jpg",  // bottom
+            pathPrefix + "assets/textures/skybox/pz.jpg",  // front
+            pathPrefix + "assets/textures/skybox/nz.jpg"   // back
     };
     GLuint cubemapTexture = loadCubemap(skyFaces);
     
@@ -424,8 +428,9 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderShadow, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID);
-            
+            //renderScene(shaderShadow, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID);
+            renderScene(shaderScene, vao, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
+
             // Unbind geometry
             glBindVertexArray(0);
         }
@@ -455,15 +460,15 @@ int main(int argc, char *argv[]) {
             
             // Draw textured geometry
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, brickTextureID);
+            glBindTexture(GL_TEXTURE_2D, stoneTextureID);
             // Bind geometry
             
             GLuint worldMatrixLocation = glGetUniformLocation(shaderScene, "model_matrix");
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID);
-            
+            //renderScene(shaderScene, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID);
+            renderScene(shaderScene, vao, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
             // Unbind geometry
             glBindVertexArray(0);
         }
@@ -1079,14 +1084,12 @@ int createSphereObject() {
 }
 
 
-void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID, GLuint clayTextureID, GLuint noTextureID) {
+void renderScene(GLuint shader, int texturedCubeVAO, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID) {
     
-    
-    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
 
     // Floor
     mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(100.0f, 0.1f, 300.0f));
-    glBindTexture(GL_TEXTURE_2D, clayTextureID);
+    glBindTexture(GL_TEXTURE_2D, grassTextureID);
     worldMatrix = groundWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
@@ -1094,17 +1097,16 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
 
     // Road
     groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(10.0f, 0.3f, 300.0f));
-    glBindTexture(GL_TEXTURE_2D, clayTextureID);
+    glBindTexture(GL_TEXTURE_2D, stoneTextureID);
     worldMatrix = groundWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    
-    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     // Draw tree
     // Trunk
     mat4 treeWorldMatrix = translate(mat4(1.0f), vec3(5.0f, 2.5f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, 5.0f, 1.0f));
+    glBindTexture(GL_TEXTURE_2D, barkTextureID);
     worldMatrix = groupMatrix * treeWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.33f, 0.2f, 0.05f)); // Brown
@@ -1112,6 +1114,7 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
     
     // Leaves
     treeWorldMatrix = translate(mat4(1.0f), vec3(5.0f, 5.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
+    glBindTexture(GL_TEXTURE_2D, leavesTextureID);
     worldMatrix = groupMatrix * treeWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(0.18f, 0.33f, 0.15f)); // Green
