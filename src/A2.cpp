@@ -3,7 +3,11 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-
+#include <unordered_set>
+#include <map>
+#include <random>
+#include <utility>
+#include <cmath>
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
 
@@ -25,6 +29,107 @@
 using namespace glm;
 using namespace std;
 
+struct WorldChunk;
+map<int, WorldChunk> chunksByPosition;
+
+// (Work in progress)
+struct TreePosition {
+    
+    float x;
+    float z;
+    
+    explicit TreePosition(float startPositionZ) {
+        random_device dev;
+        default_random_engine generator(dev());
+        uniform_real_distribution<float> xDistribution(-50.0, 50.0);
+        uniform_real_distribution<float> zDistribution(static_cast<double>(startPositionZ) - 50.0,
+                                                       static_cast<double>(startPositionZ) + 50.0);
+        
+        x = xDistribution(generator);
+        z = zDistribution(generator);
+    };
+    
+    mat4 getTreeMatrix() const {
+        return translate(mat4(1.0f), vec3(x, 0.0f, z));
+    }
+    
+    bool operator==(const TreePosition &rhs) const {
+        return std::tie(x, z) == std::tie(rhs.x, rhs.z);
+    }
+    
+    bool operator!=(const TreePosition &rhs) const {
+        return !(rhs == *this);
+    }
+};
+
+namespace std {
+    template<>
+    struct hash<std::pair<int, int>> {
+        size_t operator()(const std::pair<int, int> &p) const {
+            return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
+        }
+    };
+}
+
+struct WorldChunk {
+    
+    vector<TreePosition> treeData;
+    unordered_set<pair<int, int>> occupiedGrids;
+    
+    float chunkPositionZ;
+    int chunkPositionID;
+    bool movingForward;
+    
+    explicit WorldChunk(int chunkPositionID, bool movingForward) : chunkPositionID(chunkPositionID),
+                                                                   movingForward(movingForward) {
+//        generateTrees(1);
+        chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
+    };
+    
+    bool insertTree(TreePosition tree) {
+        
+        int x = static_cast<int>(tree.x);
+        int z = static_cast<int>(tree.z);
+        
+        if (occupiedGrids.contains(make_pair(x, z))) {
+            return false;
+        }
+        
+        int treeWidth = 4;
+        int treeDepth = 4;
+        int offsetX = treeWidth / 2 + 1;
+        int offsetZ = treeDepth / 2 + 1;
+        
+        x = static_cast<int>(tree.x) - offsetX;
+        z = static_cast<int>(tree.z) - offsetZ;
+        
+        for (; x < offsetX * 2; x++) {
+            for (; z < offsetZ * 2; x++) {
+                occupiedGrids.insert(make_pair(x, z));
+            }
+        }
+        
+        treeData.push_back(tree);
+        
+        return true;
+    }
+    
+    void generateTrees(int numOfTrees) {
+        while (numOfTrees != 0) {
+            bool treeInserted = insertTree(TreePosition(chunkPositionZ));
+            while (!treeInserted) {
+                treeInserted = insertTree(TreePosition(chunkPositionZ));
+            }
+            numOfTrees--;
+        }
+    }
+    
+    mat4 getGroundMatrix() const {
+        return translate(mat4(1.0f), vec3(0.0f, -0.09f, chunkPositionZ)) *
+               scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
+    }
+};
+
 unsigned int indexCount;
 
 int createTexturedCubeVAO();
@@ -38,7 +143,7 @@ GLuint loadCubemap(vector<std::string> faces);
 GLuint createSkyboxObject();
 
 void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID);
+                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ, bool movingForward);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -333,6 +438,12 @@ int main(int argc, char *argv[]) {
     glBindVertexArray(vao);
     int previousXstate = GLFW_RELEASE;
     int previousZstate = GLFW_RELEASE;
+    
+    // Keep track of camera displacement direction (in z axis) for procedural generation
+    float lastZ = cameraPosition.z;
+    float currentZ;
+    bool movingForward;
+    
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
         // Frame time calculation
@@ -418,7 +529,8 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderShadow, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID);
+            renderScene(shaderShadow, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID,
+                        cameraPosition.z, movingForward);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -456,7 +568,8 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID);
+            renderScene(shaderScene, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID,
+                        cameraPosition.z, movingForward);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -633,6 +746,9 @@ int main(int argc, char *argv[]) {
         if (selection == 0) {
             
             cameraPosition = cameraPositionWalking;
+            currentZ = cameraPosition.z;
+            movingForward = lastZ - currentZ >= 0;
+            lastZ = currentZ;
             
             bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
@@ -670,23 +786,36 @@ int main(int argc, char *argv[]) {
             if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
             {
                 cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
+                currentZ = cameraPosition.z;
+                movingForward = lastZ - currentZ >= 0;
+                lastZ = currentZ;
             }
             
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
             {
                 cameraPosition += cameraSideVector * currentCameraSpeed * dt;
+                currentZ = cameraPosition.z;
+                movingForward = lastZ - currentZ >= 0;
+                lastZ = currentZ;
             }
             
             if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera up
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition -= moveDirection * currentCameraSpeed * dt;
+                currentZ = cameraPosition.z;
+                movingForward = lastZ - currentZ >= 0;
+                lastZ = currentZ;
             }
             
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera down
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition += moveDirection * currentCameraSpeed * dt;
+                currentZ = cameraPosition.z;
+                movingForward = lastZ - currentZ >= 0;
+                lastZ = currentZ;
+                cout << cameraPosition.z << "\n";
             }
             
             
@@ -707,6 +836,9 @@ int main(int argc, char *argv[]) {
         if (selection == 1) {
             
             cameraPosition = vec3(0.6f, 10.0f, 10.0f);
+            currentZ = cameraPosition.z;
+            movingForward = lastZ - currentZ >= 0;
+            lastZ = currentZ;
             
             bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
@@ -1063,19 +1195,33 @@ int createSphereObject() {
 
 
 void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID) {
+                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ, bool movingForward) {
     
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
-    // Floor
-    mat4 courtWorldMatrix =
-            translate(mat4(1.0f), vec3(0.0f, -0.09f, 0.0f)) * scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
-    glBindTexture(GL_TEXTURE_2D, clayTextureID);
-    worldMatrix = courtWorldMatrix;
-    setWorldMatrix(shader, worldMatrix);
-    SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
     
+    // Render two chunks in front and one in the back for good perfomance / seamlessness balance
+    int endID = movingForward ? currentChunkID + 2 : currentChunkID + 1;
+    
+    // Only 4 chunks in total are rendered each frame
+    for (int i = endID - 3; i <= endID; i++) {
+        
+        // All previously rendered chunks are saved to be able to go back to same scene
+        if (!chunksByPosition.contains(i)) {
+            chunksByPosition.insert(make_pair(i, WorldChunk(i, movingForward)));
+        }
+        
+        WorldChunk chunk = chunksByPosition.at(i);
+        
+        // Floor
+        mat4 courtWorldMatrix = chunk.getGroundMatrix();
+        glBindTexture(GL_TEXTURE_2D, clayTextureID);
+        worldMatrix = courtWorldMatrix;
+        setWorldMatrix(shader, worldMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
     
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     // Draw tree
@@ -1093,10 +1239,10 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
     SetUniformVec3(shader, "object_color", vec3(0.18f, 0.33f, 0.15f)); // Green
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    
     // Draw coordinate axis
     // X axis
-    mat4 axisWorldMatrix = translate(mat4(1.0f), vec3(1.5f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(3.0f, 0.1f, 0.1f));
+    mat4 axisWorldMatrix =
+            translate(mat4(1.0f), vec3(1.5f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(3.0f, 0.1f, 0.1f));
     worldMatrix = axisWorldMatrix;
     setWorldMatrix(shader, worldMatrix);
     SetUniformVec3(shader, "object_color", vec3(1.0f, 0.0f, 0.0f)); // Blue
