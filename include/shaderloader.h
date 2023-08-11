@@ -22,7 +22,7 @@ int loadSHADER(string vertex_file_path, string fragment_file_path) {
 		VertexShaderStream.close();
 	}
 	else {
-		printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+		printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path.c_str());
 		getchar();
 		return 0;
 	}
