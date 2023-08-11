@@ -26,6 +26,12 @@
 
 #include <stb_image.h>
 
+#if defined(__APPLE__)
+string pathPrefix = "../";
+#else
+string pathPrefix = "";
+#endif
+
 using namespace glm;
 using namespace std;
 
@@ -278,7 +284,7 @@ int main(int argc, char *argv[]) {
     // background
     glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
     
-    std::string shaderPathPrefix = "../assets/shaders/";
+    std::string shaderPathPrefix = pathPrefix + "assets/shaders/";
     
     GLuint shaderScene = loadSHADER(shaderPathPrefix + "scene_vertex.glsl", shaderPathPrefix + "scene_fragment.glsl");
     
@@ -289,20 +295,20 @@ int main(int argc, char *argv[]) {
                                      shaderPathPrefix + "skybox.frag");
     
     // Load Textures
-    GLuint brickTextureID = loadTexture("../assets/textures/brick.jpg");
-    GLuint cementTextureID = loadTexture("../assets/textures/cement.jpg");
-    GLuint tennisTextureID = loadTexture("../assets/textures/tennisball.jpg");
-    GLuint glossyTextureID = loadTexture("../assets/textures/glossy2.jpg");
-    GLuint clayTextureID = loadTexture("../assets/textures/clay3.jpg");
-    GLuint noTextureID = loadTexture("../assets/textures/white.jpg");
+    GLuint brickTextureID = loadTexture((pathPrefix + "assets/textures/brick.jpg").c_str());
+    GLuint cementTextureID = loadTexture((pathPrefix + "assets/textures/cement.jpg").c_str());
+    GLuint tennisTextureID = loadTexture((pathPrefix + "assets/textures/tennisball.jpg").c_str());
+    GLuint glossyTextureID = loadTexture((pathPrefix + "assets/textures/glossy2.jpg").c_str());
+    GLuint clayTextureID = loadTexture((pathPrefix + "assets/textures/clay3.jpg").c_str());
+    GLuint noTextureID = loadTexture((pathPrefix + "assets/textures/white.jpg").c_str());
     
     vector<std::string> skyFaces{
-            "../assets/textures/skybox/px.jpg",  // right
-            "../assets/textures/skybox/nx.jpg",  // left
-            "../assets/textures/skybox/py.jpg",  // top
-            "../assets/textures/skybox/ny.jpg",  // bottom
-            "../assets/textures/skybox/pz.jpg",  // front
-            "../assets/textures/skybox/nz.jpg"   // back
+            pathPrefix + "assets/textures/skybox/px.jpg",  // right
+            pathPrefix + "assets/textures/skybox/nx.jpg",  // left
+            pathPrefix + "assets/textures/skybox/py.jpg",  // top
+            pathPrefix + "assets/textures/skybox/ny.jpg",  // bottom
+            pathPrefix + "assets/textures/skybox/pz.jpg",  // front
+            pathPrefix + "assets/textures/skybox/nz.jpg"   // back
     };
     GLuint cubemapTexture = loadCubemap(skyFaces);
     
