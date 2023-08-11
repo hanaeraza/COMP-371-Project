@@ -679,12 +679,14 @@ int main(int argc, char *argv[]) {
             
             if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera up
             {
-                cameraPosition -= cameraLookAt * currentCameraSpeed * dt;
+                vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
+                cameraPosition -= moveDirection * currentCameraSpeed * dt;
             }
             
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera down
             {
-                cameraPosition += cameraLookAt * currentCameraSpeed * dt;
+                vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
+                cameraPosition += moveDirection * currentCameraSpeed * dt;
             }
             
             
