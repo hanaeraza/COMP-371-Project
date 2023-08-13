@@ -115,12 +115,13 @@ GLuint loadTexture(const char *filename);
 int createSphereObject();
 
 const char *getLightVertexShaderSource();
-
 const char *getLightFragmentShaderSource();
+const char *getSkyboxVertexShaderSource();
+const char *getSkyboxFragmentShaderSource();
 
-//const char* getShadowVertexShaderSource();
+GLuint loadCubemap(vector<std::string> faces);
 
-//const char* getShadowFragmentShaderSource();
+GLuint createSkyboxObject();
 
 float rotX = 0.0f;
 int camNum = 3;
@@ -535,17 +536,26 @@ int main(int argc, char *argv[]) {
     GLuint carTextureID = loadTexture((pathPrefix + "Assets/Textures/car.jpg").c_str());
     GLuint tireTextureID = loadTexture((pathPrefix + "Assets/Textures/tire.jpg").c_str());
     
+    vector<std::string> skyFaces{
+            pathPrefix + "assets/textures/skybox/px.jpg",  // right
+            pathPrefix + "assets/textures/skybox/nx.jpg",  // left
+            pathPrefix + "assets/textures/skybox/py.jpg",  // top
+            pathPrefix + "assets/textures/skybox/ny.jpg",  // bottom
+            pathPrefix + "assets/textures/skybox/pz.jpg",  // front
+            pathPrefix + "assets/textures/skybox/nz.jpg"   // back
+    };
+    GLuint cubemapTexture = loadCubemap(skyFaces);
     
-    
-    
-    // Gray background
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
-    
-    
     // Compile and link shaders here ...
-    int lightShaderProgram = compileAndLinkShaders(getLightVertexShaderSource(), getLightFragmentShaderSource());
-    //int ShadowShaderProgram = compileAndLinkShaders(getShadowVertexShaderSource(), getShadowFragmentShaderSource());
+    GLuint lightShaderProgram = compileAndLinkShaders(getLightVertexShaderSource(), getLightFragmentShaderSource());
+    GLuint skyboxShader = compileAndLinkShaders(getSkyboxVertexShaderSource(),getSkyboxFragmentShaderSource());
+    
+    glUseProgram(skyboxShader);
+    vec3 lightColor = vec3(1.0f, 1.0f, 1.0f); // Used for both the scene shader and the skybox shader
+    SetUniformVec3(skyboxShader, "lightColor", lightColor);
+    
     int textureFlag = 1; // Toggle textures flag
     
     SetUniformVec3(lightShaderProgram, "light_color", vec3(1.0, 1.0, 1.0)); // Set light color on light shader
@@ -569,6 +579,7 @@ int main(int argc, char *argv[]) {
     int texturedCubeVAO = createTexturedCubeVertexArrayObject();
     int lightCubeVAO = createLightCubeVertexArrayObject();
     int vaos = createSphereObject();
+    GLuint skyboxVAO = createSkyboxObject();
     
     // For frame time
     float lastFrameTime = glfwGetTime();
@@ -1176,13 +1187,17 @@ int main(int argc, char *argv[]) {
         SetUniformMat4(lightShaderProgram, "projectionMatrix",
                        projectionMatrix); // Set projection matrix on both shaders
         
+                       
+        // Draw skybox last for optimization (hidden portions won't be rendered)
+        glUseProgram(skyboxShader);
+        SetUniformMat4(skyboxShader, "view", viewMatrix);
+        SetUniformMat4(skyboxShader, "projection", projectionMatrix);
         
-        
-        
-        
-        
-        
-        
+        glDepthFunc(GL_LEQUAL); // Change depth function so that the skybox's maximmum depth value get rendered
+        glBindVertexArray(skyboxVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDepthFunc(GL_LESS); // Back to default
         
         // End Frame
         glfwSwapBuffers(window);
@@ -1682,6 +1697,97 @@ GLuint loadTexture(const char *filename) {
     return textureId;
 }
 
+
+// Loads the 6 cube face images, binds and generates the resulting cubemap texture, and returns its ID
+GLuint loadCubemap(vector<std::string> faces) {
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+    
+    int width, height, nrChannels;
+    
+    // The cube map texture enums can be incremented in order (right, left, top, bottom, front, back)
+    for (unsigned int i = 0; i < faces.size(); i++) {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        
+        if (data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        } else {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    
+    return textureID;
+}
+
+// Generates VAO & VBO for the skybox/cubemap and returns VAO identifier
+GLuint createSkyboxObject() {
+    float skyboxVertices[] = {
+            // positions
+            -1.0f, 1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, 1.0f, -1.0f,
+            -1.0f, 1.0f, -1.0f,
+            
+            -1.0f, -1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, 1.0f, -1.0f,
+            -1.0f, 1.0f, -1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f,
+            
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            
+            -1.0f, -1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f,
+            
+            -1.0f, 1.0f, -1.0f,
+            1.0f, 1.0f, -1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f,
+            
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f
+    };
+    
+    GLuint skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    
+    return skyboxVAO;
+}
+
 int createTexturedCubeVertexArrayObject() {
     // Create a vertex array
     GLuint vertexArrayObject;
@@ -1895,4 +2001,45 @@ bool InitContext() {
     }
     
     return true;
+}
+
+const char *getSkyboxVertexShaderSource() {
+    return "#version 330 core\n"
+           "\n"
+           "layout (location = 0) in vec3 position;\n"
+           "\n"
+           "out vec3 texCoords;\n"
+           "\n"
+           "uniform mat4 projection;\n"
+           "uniform mat4 view;\n"
+           "\n"
+           "void main()\n"
+           "{\n"
+           "    texCoords = position;\n"
+           "\n"
+           "    // The translation component is removed from the view to make the skybox position stationary\n"
+           "    vec4 pos = projection * mat4(mat3(view)) * vec4(position, 1.0);\n"
+           "\n"
+           "    // Give skybox the highest possible depth value to always make it appear behind all other objects\n"
+           "    gl_Position = pos.xyww;\n"
+           "}";
+}
+
+const char *getSkyboxFragmentShaderSource() {
+    return "#version 330 core\n"
+           "\n"
+           "out vec4 fragColor;\n"
+           "\n"
+           "in vec3 texCoords;\n"
+           "\n"
+           "uniform samplerCube skybox;\n"
+           "uniform vec3 lightColor;\n"
+           "\n"
+           "void main()\n"
+           "{\n"
+           "    float ambientStrength = 0.8f;\n"
+           "    vec3 ambientColor = ambientStrength * lightColor * texture(skybox, texCoords).rgb;\n"
+           "\n"
+           "    fragColor = vec4(ambientColor, 1.0f);\n"
+           "}";
 }
