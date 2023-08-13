@@ -33,6 +33,11 @@ string pathPrefix = "";
 using namespace glm;
 using namespace std;
 
+float rotX = 0.0f;
+int camNum = 3;
+int carLight = 0;
+
+
 struct WorldChunk;
 map<int, WorldChunk> chunksByPosition;
 
@@ -112,9 +117,9 @@ struct WorldChunk {
 
 unsigned int indexCount;
 
-int createTexturedCubeVAO();
+GLuint createTexturedCubeVAO();
 
-int createSphereObject();
+GLuint createSphereObject();
 
 GLuint loadTexture(const char *filename);
 
@@ -122,7 +127,7 @@ GLuint loadCubemap(vector<std::string> faces);
 
 GLuint createSkyboxObject();
 
-void renderScene(GLuint shader, int texturedCubeVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID);
+void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID, GLuint carTextureID, GLuint tireTextureID, vec3 carMove);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -256,6 +261,153 @@ void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &_worldMatrix[0][0]);
 }
 
+void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint tireText) {
+    glBindTexture(GL_TEXTURE_2D, carText);
+    mat4 car;
+    float sizeInc = 1;//make car dif size
+    mat4 reposition = translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f));//position car in scene
+    
+    mat4 body = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 1.0f, -5.0f + carMove.z)) *
+                scale(mat4(1.0f), sizeInc * vec3(4.0f, 1.5f, 8.0f));
+    car = reposition * body;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 light1 = translate(mat4(1.0f), sizeInc * vec3(1 + carMove.x, 1.0f, -9.0f + carMove.z)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.1f));
+    car = reposition * light1;
+    SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 light2 = translate(mat4(1.0f), sizeInc * vec3(3.5f + carMove.x, 1.0f, -9.0f + carMove.z)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.1f));
+    car = reposition * light2;
+    SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side1 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 2.5, -3 + carMove.z)) *
+                 scale(mat4(1.0f), sizeInc * vec3(0.1f, 1.75, 3));
+    car = reposition * side1;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side1_2 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 3.23, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
+    car = reposition * side1_2;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side1_3 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 1.75, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
+    car = reposition * side1_3;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side1_4 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 2.5, -7 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.15f, 1.3, 1));
+    car = reposition * side1_4;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side2 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 2.5, -3 + carMove.z)) *
+                 scale(mat4(1.0f), sizeInc * vec3(0.1f, 1.75, 3));
+    car = reposition * side2;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side2_2 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 3.23, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
+    car = reposition * side2_2;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side2_3 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 1.75, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
+    car = reposition * side2_3;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 side2_4 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 2.5, -7 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.15f, 1.3, 1));
+    car = reposition * side2_4;
+    SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 window1 = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 1.75, -7.5 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(3, 0.3, 0.1f));
+    car = reposition * window1;
+    SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 window2 = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 3.25, -7.5 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(3, 0.3, 0.1f));
+    car = reposition * window2;
+    SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 back = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 2.5, -1.5 + carMove.z)) *
+                scale(mat4(1.0f), sizeInc * vec3(3, 1.75, 0.1f));
+    car = reposition * back;
+    SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 top = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 3.4, -4.5 + carMove.z)) *
+               scale(mat4(1.0f), sizeInc * vec3(3, 0.1, 6.0f));
+    car = reposition * top;
+    SetUniformVec3(shader_id, "object_color", vec3(1, 0, 1));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    glBindTexture(GL_TEXTURE_2D, tireText);
+    glBindVertexArray(vaos);
+    mat4 wheel1 = translate(mat4(1.0f), sizeInc * vec3(4.5f + carMove.x, 0.5f, -7.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
+    car = reposition * wheel1;
+    SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    mat4 wheel2 = translate(mat4(1.0f), sizeInc * vec3(4.5f + carMove.x, 0.5f, -3.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
+    car = reposition * wheel2;
+    SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    mat4 wheel3 = translate(mat4(1.0f), sizeInc * vec3(0 + carMove.x, 0.5f, -7.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
+    car = reposition * wheel3;
+    SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    mat4 wheel4 = translate(mat4(1.0f), sizeInc * vec3(0 + carMove.x, 0.5f, -3.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
+    car = reposition * wheel4;
+    SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
+    SetUniformMat4(shader_id, "model_matrix", car);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+}
+
 int main(int argc, char *argv[]) {
     if (!InitContext()) return -1;
     
@@ -278,6 +430,8 @@ int main(int argc, char *argv[]) {
     GLuint leavesTextureID = loadTexture((pathPrefix + "assets/textures/leaves.jpg").c_str());
     GLuint barkTextureID = loadTexture((pathPrefix + "assets/textures/bark.jpg").c_str());
     GLuint noTextureID = loadTexture((pathPrefix + "assets/textures/white.jpg").c_str());
+    GLuint carTextureID = loadTexture((pathPrefix + "assets/textures/car.jpg").c_str());
+    GLuint tireTextureID = loadTexture((pathPrefix + "assets/textures/tire.jpg").c_str());
     
     vector<std::string> skyFaces{
             pathPrefix + "assets/textures/skybox/px.jpg",  // right
@@ -356,10 +510,11 @@ int main(int argc, char *argv[]) {
     
     // Camera parameters for view transform
     // The perfomance slows when cameraPos holds negative values, hence why it's fairly big
-    vec3 cameraPosition(0.6f, 3.0f, 2000.0f);
+    vec3 cameraPosition(0.6f, 10.0f, 2000.0f);
     vec3 cameraPositionWalking(0.6f, 3.0f, 2000.0f);
     vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
+    vec3 carMove(0, 0, 1980.0f);
     
     // Other camera parameters
     float cameraSpeed = 12.0f;
@@ -381,7 +536,7 @@ int main(int argc, char *argv[]) {
     mat4 viewMatrix = lookAt(cameraPosition,                // eye
                              cameraPosition + cameraLookAt, // center
                              cameraUp);                     // up
-    
+                             
     // Set projection matrix on both shaders
     SetUniformMat4(shaderScene, "projection_matrix", projectionMatrix);
     
@@ -402,13 +557,12 @@ int main(int argc, char *argv[]) {
     // Set object color on scene shader
     SetUniformVec3(shaderScene, "object_color", vec3(1.0, 1.0, 1.0));
     
-    int vao = createTexturedCubeVAO();
-    int sphereVAO = createSphereObject();
+    GLuint vao = createTexturedCubeVAO();
+    GLuint sphereVAO = createSphereObject();
     GLuint skyboxVAO = createSkyboxObject();
     
     // For frame time
     float lastFrameTime = glfwGetTime();
-    int lastMouseLeftState = GLFW_RELEASE;
     double lastMousePosX, lastMousePosY;
     glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
     
@@ -419,9 +573,12 @@ int main(int argc, char *argv[]) {
     
     
     glBindVertexArray(vao);
+    
     int previousXstate = GLFW_RELEASE;
     int previousZstate = GLFW_RELEASE;
     int previousLstate = GLFW_RELEASE;
+    int lastCState = GLFW_RELEASE;
+    int lastMouseLeftState = GLFW_RELEASE;
     
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
@@ -513,7 +670,7 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderShadow, vao, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
+            renderScene(shaderShadow, vao, sphereVAO,cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -551,7 +708,7 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
+            renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -578,7 +735,7 @@ int main(int argc, char *argv[]) {
             glfwSetWindowShouldClose(window, true);
         
         
-        // Toggle texture 
+        // Toggle texture
         if (previousXstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
             glGetUniformiv(shaderScene, textureflag, currentvalue);
             if (currentvalue[0] == 1) {
@@ -640,12 +797,6 @@ int main(int argc, char *argv[]) {
         
         float theta = radians(cameraHorizontalAngle);
         float phi = radians(cameraVerticalAngle);
-        
-        // Number selections
-        if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
-            selection = 0;
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-            selection = 1;
         
         
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // close window
@@ -731,6 +882,21 @@ int main(int argc, char *argv[]) {
         {
             fov -= 1.0f;
         }
+    
+    //Change between aerial and person view
+    if (lastCState == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+        
+        if (camNum == 1) {
+            camNum = 2;
+        } else if (camNum == 2) {
+            camNum = 3;
+        } else if (camNum == 3) {
+            camNum = 4;
+        } else if (camNum == 4) {
+            camNum = 1;
+        }
+    }
+    lastCState = glfwGetKey(window, GLFW_KEY_C);
         
         // Free camera, default
         if (selection == 0) {
@@ -769,35 +935,53 @@ int main(int argc, char *argv[]) {
             
             glm::normalize(cameraSideVector);
             
+            if (camNum == 1) { cameraPosition = vec3(0.0f + carMove.x, 3.0f, 0.0f + carMove.z); }
+            else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
+            else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
+            else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
+            
             
             if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
             {
                 cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
+                
+                carMove -= cameraSideVector * currentCameraSpeed * dt;
             }
             
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
             {
                 cameraPosition += cameraSideVector * currentCameraSpeed * dt;
+                
+                carMove += cameraSideVector * currentCameraSpeed * dt;
             }
 
             if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition -= moveDirection * currentCameraSpeed * dt;
+                
+                carMove -=  moveDirection * currentCameraSpeed * dt;
             }
 
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition += moveDirection * currentCameraSpeed * dt;
+                
+                carMove +=  moveDirection * currentCameraSpeed * dt;
+                
                 cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
             }
 
             // walking boundaries
-            if (cameraPosition.x > 5.0f)
-                cameraPosition.x = 5.0f;
-            if (cameraPosition.x < -5.0f)
-                cameraPosition.x = -5.0f;
+            if (cameraPosition.x > 2.0f)
+                cameraPosition.x = 2.0f;
+            if (cameraPosition.x < -2.0f)
+                cameraPosition.x = -2.0f;
+            if (carMove.x > 2.0f)
+                carMove.x = 2.0f;
+            if (carMove.x < -2.0f)
+                carMove.x = -2.0f;
 
 
             viewMatrix = mat4(1.0);
@@ -1036,7 +1220,7 @@ GLuint createSkyboxObject() {
     return skyboxVAO;
 }
 
-int createTexturedCubeVAO() {
+GLuint createTexturedCubeVAO() {
     // Create a vertex array
     GLuint vertexArrayObject;
     glGenVertexArrays(1, &vertexArrayObject);
@@ -1080,7 +1264,7 @@ int createTexturedCubeVAO() {
 }
 
 
-int createSphereObject() {
+GLuint createSphereObject() {
     // A vertex is a point on a polygon, it contains positions and other data (eg: colors)
     unsigned int sphereVAO;
     glGenVertexArrays(1, &sphereVAO);
@@ -1174,7 +1358,7 @@ int createSphereObject() {
 
 int lastChunkID = -100;
 
-void renderScene(GLuint shader, int texturedCubeVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID) {
+void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID, GLuint carTextureID, GLuint tireTextureID, vec3 carMove) {
 
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
@@ -1233,5 +1417,7 @@ void renderScene(GLuint shader, int texturedCubeVAO, float cameraPosZ, GLuint st
             
         }
     }
+    
+    drawCar(shader, sphereVAO, carMove, carTextureID, tireTextureID);
     
 }
