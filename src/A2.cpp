@@ -8,6 +8,7 @@
 #include <cmath>
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
+
 #include <GL/glew.h>    // Include GLEW - OpenGL Extension Wrangler
 #include <GLFW/glfw3.h> // GLFW provides a cross-platform interface for creating a graphical context,
 // initializing OpenGL and binding inputs
@@ -109,13 +110,13 @@ struct WorldChunk {
 
 unsigned int indexCount;
 
-GLuint loadTexture(const char* filename);
+GLuint loadTexture(const char *filename);
 
 int createSphereObject();
 
-const char* getLightVertexShaderSource();
+const char *getLightVertexShaderSource();
 
-const char* getLightFragmentShaderSource();
+const char *getLightFragmentShaderSource();
 
 //const char* getShadowVertexShaderSource();
 
@@ -128,13 +129,13 @@ int carLight = 0;
 // window dimensions
 const GLuint WIDTH = 1024, HEIGHT = 768;
 
-int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource);
+int compileAndLinkShaders(const char *vertexShaderSource, const char *fragmentShaderSource);
 
-GLFWwindow* window = nullptr;
+GLFWwindow *window = nullptr;
+
 bool InitContext();
 
-struct TexturedColoredVertex
-{
+struct TexturedColoredVertex {
     TexturedColoredVertex(vec3 _position, vec3 _color, vec2 _uv)
             : position(_position), color(_color), uv(_uv) {}
     
@@ -145,53 +146,53 @@ struct TexturedColoredVertex
 
 // Textured Cube model
 const TexturedColoredVertex texturedCubeVertexArray[] = {  // position,                            color
-        TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f)), //left - red
-        TexturedColoredVertex(vec3(-0.5f,-0.5f, 0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(-1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)), //left - red
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(-1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(-1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
         
-        TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(-1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(-1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(-1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f, 0.5f,-0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f)), // far - blue
-        TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f), vec2(1.0f, 1.0f)), // far - blue
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f), vec2(0.0f, 1.0f)),
         
-        TexturedColoredVertex(vec3(0.5f, 0.5f,-0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f)),
-        TexturedColoredVertex(vec3(0.5f,-0.5f,-0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f)),
-        TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f), vec2(0.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f,-0.5f, 0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f)), // bottom - turquoise
-        TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(0.5f,-0.5f,-0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, -1.0f, 0.0f), vec2(1.0f, 1.0f)), // bottom - turquoise
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, -1.0f, 0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, -1.0f, 0.0f), vec2(1.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f,-0.5f, 0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f)),
-        TexturedColoredVertex(vec3(-0.5f,-0.5f, 0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 1.0f)),
-        TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, -1.0f, 0.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, -1.0f, 0.0f), vec2(0.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, -1.0f, 0.0f), vec2(0.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f)), // near - green
-        TexturedColoredVertex(vec3(-0.5f,-0.5f, 0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(0.5f,-0.5f, 0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)), // near - green
+        TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 1.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f)),
-        TexturedColoredVertex(vec3(0.5f,-0.5f, 0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f)), // right - purple
-        TexturedColoredVertex(vec3(0.5f,-0.5f,-0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(0.5f, 0.5f,-0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)), // right - purple
+        TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f,-0.5f,-0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f)),
-        TexturedColoredVertex(vec3(0.5f,-0.5f, 0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f)),
         
-        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f)), // top - yellow
-        TexturedColoredVertex(vec3(0.5f, 0.5f,-0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 0.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)), // top - yellow
+        TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
         
-        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f)),
-        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 1.0f))
+        TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
+        TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f))
 };
 
 int createTexturedCubeVertexArrayObject();
@@ -199,33 +200,28 @@ int createTexturedCubeVertexArrayObject();
 int createLightCubeVertexArrayObject();
 
 // shader variable setters
-void SetUniformMat4(GLuint shader_id, const char* uniform_name, mat4 uniform_value)
-{
+void SetUniformMat4(GLuint shader_id, const char *uniform_name, mat4 uniform_value) {
     glUseProgram(shader_id);
     glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
 }
 
-void SetUniformVec3(GLuint shader_id, const char* uniform_name, vec3 uniform_value)
-{
+void SetUniformVec3(GLuint shader_id, const char *uniform_name, vec3 uniform_value) {
     glUseProgram(shader_id);
     glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
 }
 
-template <class T>
-void SetUniform1Value(GLuint shader_id, const char* uniform_name, T uniform_value)
-{
+template<class T>
+void SetUniform1Value(GLuint shader_id, const char *uniform_name, T uniform_value) {
     glUseProgram(shader_id);
     glUniform1i(glGetUniformLocation(shader_id, uniform_name), uniform_value);
     glUseProgram(0);
 }
 
-void SetUniformfvalue(GLuint shader_id, const char* uniform_name, float uniform_value)
-{
+void SetUniformfvalue(GLuint shader_id, const char *uniform_name, float uniform_value) {
     glUseProgram(shader_id);
     glUniform1f(glGetUniformLocation(shader_id, uniform_name), uniform_value);
     glUseProgram(0);
 }
-
 
 
 //Draws the ground ln the right and left of the road
@@ -233,12 +229,14 @@ void drawGround(GLuint shader_id, float z, GLuint texture) {
     glBindTexture(GL_TEXTURE_2D, texture);
     glUseProgram(shader_id);
     //Drawing dirt "forest" around the road (right, left)
-    mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(56.0f, 0.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 300.0f));
+    mat4 groundWorldMatrix =
+            translate(mat4(1.0f), vec3(56.0f, 0.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 300.0f));
     SetUniformVec3(shader_id, "object_color", vec3(0.0, 1.0, 0.0f));
     SetUniformMat4(shader_id, "modelMatrix", groundWorldMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    groundWorldMatrix = translate(mat4(1.0f), vec3(-56.0f, 0.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 300.0f));
+    groundWorldMatrix =
+            translate(mat4(1.0f), vec3(-56.0f, 0.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(100.0f, 0.0f, 300.0f));
     SetUniformVec3(shader_id, "object_color", vec3(0.0, 1.0, 0.0f));
     SetUniformMat4(shader_id, "modelMatrix", groundWorldMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -249,7 +247,8 @@ void drawGround(GLuint shader_id, float z, GLuint texture) {
 void drawRoad(GLuint shader_id, float z, GLuint text) {
     //Draw the road
     glBindTexture(GL_TEXTURE_2D, text);
-    mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(12.0f, 0.0f, 300.0f));
+    mat4 groundWorldMatrix =
+            translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(12.0f, 0.0f, 300.0f));
     glBindTexture(GL_TEXTURE_2D, text);
     SetUniformVec3(shader_id, "object_color", vec3(0.5f, 0.5f, 0.5f));
     SetUniformMat4(shader_id, "modelMatrix", groundWorldMatrix);
@@ -263,91 +262,106 @@ void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint ti
     float sizeInc = 1;//make car dif size
     mat4 reposition = translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f));//position car in scene
     
-    mat4 body = translate(mat4(1.0f), sizeInc*vec3(2.25f+carMove.x, 1.0f, -5.0f + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(4.0f, 1.5f, 8.0f));
+    mat4 body = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 1.0f, -5.0f + carMove.z)) *
+                scale(mat4(1.0f), sizeInc * vec3(4.0f, 1.5f, 8.0f));
     car = reposition * body;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 light1 = translate(mat4(1.0f), sizeInc*vec3(1 + carMove.x, 1.0f, -9.0f + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 0.5f, 0.1f));
+    mat4 light1 = translate(mat4(1.0f), sizeInc * vec3(1 + carMove.x, 1.0f, -9.0f + carMove.z)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.1f));
     car = reposition * light1;
     SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 light2 = translate(mat4(1.0f), sizeInc*vec3(3.5f + carMove.x, 1.0f, -9.0f + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 0.5f, 0.1f));
+    mat4 light2 = translate(mat4(1.0f), sizeInc * vec3(3.5f + carMove.x, 1.0f, -9.0f + carMove.z)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.1f));
     car = reposition * light2;
     SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1 = translate(mat4(1.0f), sizeInc*vec3(0.75f + carMove.x, 2.5, -3 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 1.75, 3));
+    mat4 side1 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 2.5, -3 + carMove.z)) *
+                 scale(mat4(1.0f), sizeInc * vec3(0.1f, 1.75, 3));
     car = reposition * side1;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1_2 = translate(mat4(1.0f), sizeInc*vec3(0.75f + carMove.x, 3.23, -6 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 0.3, 3));
+    mat4 side1_2 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 3.23, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
     car = reposition * side1_2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1_3 = translate(mat4(1.0f), sizeInc*vec3(0.75f + carMove.x, 1.75, -6 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 0.3, 3));
+    mat4 side1_3 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 1.75, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
     car = reposition * side1_3;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1_4 = translate(mat4(1.0f), sizeInc*vec3(0.75f + carMove.x, 2.5, -7 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.15f, 1.3, 1));
+    mat4 side1_4 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 2.5, -7 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.15f, 1.3, 1));
     car = reposition * side1_4;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2 = translate(mat4(1.0f), sizeInc*vec3(3.75f + carMove.x, 2.5, -3 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 1.75, 3));
+    mat4 side2 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 2.5, -3 + carMove.z)) *
+                 scale(mat4(1.0f), sizeInc * vec3(0.1f, 1.75, 3));
     car = reposition * side2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2_2 = translate(mat4(1.0f), sizeInc*vec3(3.75f + carMove.x, 3.23, -6 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 0.3, 3));
+    mat4 side2_2 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 3.23, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
     car = reposition * side2_2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2_3 = translate(mat4(1.0f), sizeInc*vec3(3.75f + carMove.x, 1.75, -6 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 0.3, 3));
+    mat4 side2_3 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 1.75, -6 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
     car = reposition * side2_3;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2_4 = translate(mat4(1.0f), sizeInc*vec3(3.75f + carMove.x, 2.5, -7 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(0.15f, 1.3, 1));
+    mat4 side2_4 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 2.5, -7 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(0.15f, 1.3, 1));
     car = reposition * side2_4;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 window1 = translate(mat4(1.0f), sizeInc*vec3(2.25f + carMove.x, 1.75, -7.5 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(3, 0.3, 0.1f));
+    mat4 window1 = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 1.75, -7.5 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(3, 0.3, 0.1f));
     car = reposition * window1;
-    SetUniformVec3(shader_id, "object_color", vec3(1,0,0));
+    SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 window2 = translate(mat4(1.0f), sizeInc*vec3(2.25f + carMove.x, 3.25, -7.5 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(3, 0.3, 0.1f));
+    mat4 window2 = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 3.25, -7.5 + carMove.z)) *
+                   scale(mat4(1.0f), sizeInc * vec3(3, 0.3, 0.1f));
     car = reposition * window2;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 back = translate(mat4(1.0f), sizeInc*vec3(2.25f + carMove.x, 2.5, -1.5 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(3, 1.75, 0.1f));
+    mat4 back = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 2.5, -1.5 + carMove.z)) *
+                scale(mat4(1.0f), sizeInc * vec3(3, 1.75, 0.1f));
     car = reposition * back;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 top = translate(mat4(1.0f), sizeInc*vec3(2.25f + carMove.x, 3.4, -4.5 + carMove.z)) * scale(mat4(1.0f), sizeInc*vec3(3, 0.1, 6.0f));
+    mat4 top = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 3.4, -4.5 + carMove.z)) *
+               scale(mat4(1.0f), sizeInc * vec3(3, 0.1, 6.0f));
     car = reposition * top;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 1));
     SetUniformMat4(shader_id, "modelMatrix", car);
@@ -355,25 +369,33 @@ void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint ti
     
     glBindTexture(GL_TEXTURE_2D, tireText);
     glBindVertexArray(vaos);
-    mat4 wheel1 = translate(mat4(1.0f), sizeInc*vec3(4.5f + carMove.x, 0.5f, -7.0f + carMove.z))* rotate(mat4(1.0f), radians(rotX), sizeInc*vec3(1, 0, 0))*scale(mat4(1.0f), sizeInc*vec3(0.5f, 1.0f, 1.0f));
+    mat4 wheel1 = translate(mat4(1.0f), sizeInc * vec3(4.5f + carMove.x, 0.5f, -7.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
     car = reposition * wheel1;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel2 = translate(mat4(1.0f), sizeInc*vec3(4.5f + carMove.x, 0.5f, -3.0f + carMove.z))* rotate(mat4(1.0f), radians(rotX), sizeInc*vec3(1, 0, 0))*scale(mat4(1.0f), sizeInc* vec3(0.5f, 1.0f, 1.0f));
+    mat4 wheel2 = translate(mat4(1.0f), sizeInc * vec3(4.5f + carMove.x, 0.5f, -3.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
     car = reposition * wheel2;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel3 = translate(mat4(1.0f), sizeInc*vec3(0 + carMove.x, 0.5f, -7.0f + carMove.z))* rotate(mat4(1.0f), radians(rotX), sizeInc*vec3(1, 0, 0))*scale(mat4(1.0f), sizeInc* vec3(0.5f, 1.0f, 1.0f));
+    mat4 wheel3 = translate(mat4(1.0f), sizeInc * vec3(0 + carMove.x, 0.5f, -7.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
     car = reposition * wheel3;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel4 = translate(mat4(1.0f), sizeInc*vec3(0 + carMove.x, 0.5f, -3.0f + carMove.z))* rotate(mat4(1.0f), radians(rotX), sizeInc*vec3(1, 0, 0))*scale(mat4(1.0f), sizeInc* vec3(0.5f, 1.0f, 1.0f));
+    mat4 wheel4 = translate(mat4(1.0f), sizeInc * vec3(0 + carMove.x, 0.5f, -3.0f + carMove.z)) *
+                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
     car = reposition * wheel4;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "modelMatrix", car);
@@ -391,7 +413,8 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
         //Trunk
         glBindTexture(GL_TEXTURE_2D, woodText);
         
-        mat4 trunkMatrix = translate(mat4(1.0f), vec3(initial + x, 5.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(3.0f, 20.0f, 3.0f));
+        mat4 trunkMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 5.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(3.0f, 20.0f, 3.0f));
         trunkMatrix = scaleDown * trunkMatrix;
         SetUniformMat4(shader, "modelMatrix", trunkMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.267f, 0.129f, 0.004f)); // Brown
@@ -400,60 +423,67 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
         //Top leaves
         glBindTexture(GL_TEXTURE_2D, leafText);
         
-        mat4 leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 10.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(12.0f, 2.0f, 12.0f));
+        mat4 leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 10.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(12.0f, 2.0f, 12.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-        leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 12.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(10.0f, 2.0f, 10.0f));
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 12.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(10.0f, 2.0f, 10.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-        leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 14.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(8.0f, 2.0f, 8.0f));
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 14.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(8.0f, 2.0f, 8.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-        leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 16.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(6.0f, 2.0f, 6.0f));
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 16.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(6.0f, 2.0f, 6.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-        leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 18.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(4.0f, 2.0f, 4.0f));
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 18.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(4.0f, 2.0f, 4.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-        leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 20.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 20.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-        leavesMatrix = translate(mat4(1.0f), vec3(initial + x, 21.5f, 0.0f + z)) * scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f));
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 21.5f, 0.0f + z)) * scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f));
         leavesMatrix = scaleDown * leavesMatrix;
         SetUniformMat4(shader, "modelMatrix", leavesMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
-    }
-    
-    else if (tree == 2) {
+    } else if (tree == 2) {
         //Trunk
-        mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(initial + x, 3.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(1.0f, 6.0f, 1.0f));
+        mat4 groundWorldMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 3.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(1.0f, 6.0f, 1.0f));
         glBindTexture(GL_TEXTURE_2D, woodText);
         SetUniformVec3(shader, "object_color", vec3(150.0 / 255.0, 75.0 / 255.0, 0.0f));
         SetUniformMat4(shader, "modelMatrix", groundWorldMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         //Leaves
-        groundWorldMatrix = translate(mat4(1.0f), vec3(initial + x, 7.5f, 0.0f + z)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
+        groundWorldMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 7.5f, 0.0f + z)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
         glBindTexture(GL_TEXTURE_2D, leafText);
         SetUniformVec3(shader, "object_color", vec3(0.0, 1.0, 0.0f));
         SetUniformMat4(shader, "modelMatrix", groundWorldMatrix);
@@ -465,7 +495,8 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
 //Function to draw bushes
 void drawBushOrRock(GLuint shader, float z, float x, float initial, int draw, GLuint text) {
     if (draw == 1) {
-        mat4 bushMatrix = translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+        mat4 bushMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
         glBindTexture(GL_TEXTURE_2D, text);
         SetUniformMat4(shader, "modelMatrix", bushMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.5f)); // Green
@@ -479,12 +510,12 @@ void drawBushOrRock(GLuint shader, float z, float x, float initial, int draw, GL
 void drawRock(GLuint shader_id, float z, float x, float initial) {
     float sizeInc = 0.5;//make rock dif sizes
     mat4 reposition = translate(mat4(1.0f), vec3(0, 2, 0));//position rock in scene
-    mat4 rock = reposition * translate(mat4(1.0f), sizeInc*(vec3(initial+x-5.0f, 4.0f, 3.0f+z ))) * scale(mat4(1.0f), sizeInc*vec3(0.5, 0.5f, 0.5f));
-    SetUniformVec3(shader_id, "object_color", vec3(0,1,1));
+    mat4 rock = reposition * translate(mat4(1.0f), sizeInc * (vec3(initial + x - 5.0f, 4.0f, 3.0f + z))) *
+                scale(mat4(1.0f), sizeInc * vec3(0.5, 0.5f, 0.5f));
+    SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "modelMatrix", rock);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
-
 
 
 // Variables to control so that a button must be clicked and can't be held
@@ -492,10 +523,7 @@ int lastSpace = GLFW_RELEASE;
 int previousXstate = GLFW_RELEASE;
 
 
-
-
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
     if (!InitContext()) return -1;
     
     // Load Textures
@@ -530,7 +558,7 @@ int main(int argc, char* argv[])
     vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
     
-    vec3 carMove(0,0,0);
+    vec3 carMove(0, 0, 0);
     
     // Other camera parameters
     float cameraSpeed = 1.0f;
@@ -647,8 +675,7 @@ int main(int argc, char* argv[])
     
     
     // Entering Main Loop
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         //Keeps track of keys
         lastCState = glfwGetKey(window, GLFW_KEY_C);
         lastSpaceState = glfwGetKey(window, GLFW_KEY_SPACE);
@@ -668,10 +695,11 @@ int main(int argc, char* argv[])
                                             0.01f, 200.0f);   // near and far (near > 0)
         
         // Set Projection matrix on all shaders
-        SetUniformMat4(lightShaderProgram, "projectionMatrix", projectionMatrix); // Set projection matrix on light shader
+        SetUniformMat4(lightShaderProgram, "projectionMatrix",
+                       projectionMatrix); // Set projection matrix on light shader
         
         
-        if (camNum == 1) {cameraPosition= vec3(0.0f+carMove.x, 3.0f, 0.0f + carMove.z);}
+        if (camNum == 1) { cameraPosition = vec3(0.0f + carMove.x, 3.0f, 0.0f + carMove.z); }
         else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
         else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
         else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
@@ -738,8 +766,10 @@ int main(int argc, char* argv[])
         
         
         // Controls world orientation
-        mat4 currentWorldOrientationMatrix = rotate(mat4(1.0f), radians(angley), vec3(1.0f, 0.0f, 0.0f)) * rotate(mat4(1.0f), radians(anglex), vec3(0.0f, 1.0f, 0.0f));
-        SetUniformMat4(lightShaderProgram, "worldOrientationMatrix", currentWorldOrientationMatrix); // Set WOM matrix on light shader
+        mat4 currentWorldOrientationMatrix = rotate(mat4(1.0f), radians(angley), vec3(1.0f, 0.0f, 0.0f)) *
+                                             rotate(mat4(1.0f), radians(anglex), vec3(0.0f, 1.0f, 0.0f));
+        SetUniformMat4(lightShaderProgram, "worldOrientationMatrix",
+                       currentWorldOrientationMatrix); // Set WOM matrix on light shader
         
         
         
@@ -783,9 +813,7 @@ int main(int argc, char* argv[])
                 
                 if (bushLoc < 999) {
                     bushLoc += 1;
-                }
-                
-                else {
+                } else {
                     bushLoc = 0;
                 }
                 
@@ -802,9 +830,7 @@ int main(int argc, char* argv[])
                 
                 if (bushLoc < 999) {
                     bushLoc += 1;
-                }
-                
-                else {
+                } else {
                     bushLoc = 0;
                 }
                 
@@ -845,9 +871,7 @@ int main(int argc, char* argv[])
                     if (coordsLoc < 999) {
                         coordsLoc += 1;
                         treeLoc += 1;
-                    }
-                    
-                    else {
+                    } else {
                         coordsLoc = 0;
                         treeLoc = 0;
                     }
@@ -865,9 +889,7 @@ int main(int argc, char* argv[])
                     if (coordsLoc < 999) {
                         coordsLoc += 1;
                         treeLoc += 1;
-                    }
-                    
-                    else {
+                    } else {
                         coordsLoc = 0;
                         treeLoc = 0;
                     }
@@ -902,9 +924,7 @@ int main(int argc, char* argv[])
                     
                     if (bushLoc < 999) {
                         bushLoc += 1;
-                    }
-                    
-                    else {
+                    } else {
                         bushLoc = 0;
                     }
                     
@@ -923,9 +943,7 @@ int main(int argc, char* argv[])
                     
                     if (bushLoc < 999) {
                         bushLoc += 1;
-                    }
-                    
-                    else {
+                    } else {
                         bushLoc = 0;
                     }
                     
@@ -951,7 +969,6 @@ int main(int argc, char* argv[])
             }
             
             
-            
             SetUniform1Value(lightShaderProgram, "useTexture", textureFlag);
             //Calling the drawTree function (right side)
             for (int i = -350; i >= camLoc - 450; i--) {
@@ -963,9 +980,7 @@ int main(int argc, char* argv[])
                         if (coordsLoc < 999) {
                             coordsLoc += 1;
                             treeLoc += 1;
-                        }
-                        
-                        else {
+                        } else {
                             coordsLoc = 0;
                             treeLoc = 0;
                         }
@@ -989,9 +1004,7 @@ int main(int argc, char* argv[])
                         if (coordsLoc < 999) {
                             coordsLoc += 1;
                             treeLoc += 1;
-                        }
-                        
-                        else {
+                        } else {
                             coordsLoc = 0;
                             treeLoc = 0;
                         }
@@ -1030,9 +1043,7 @@ int main(int argc, char* argv[])
                     
                     if (bushLoc < 999) {
                         bushLoc += 1;
-                    }
-                    
-                    else {
+                    } else {
                         bushLoc = 0;
                     }
                     
@@ -1051,9 +1062,7 @@ int main(int argc, char* argv[])
                     
                     if (bushLoc < 999) {
                         bushLoc += 1;
-                    }
-                    
-                    else {
+                    } else {
                         bushLoc = 0;
                     }
                     
@@ -1092,9 +1101,7 @@ int main(int argc, char* argv[])
                         if (coordsLoc < 999) {
                             coordsLoc += 1;
                             treeLoc += 1;
-                        }
-                        
-                        else {
+                        } else {
                             coordsLoc = 0;
                             treeLoc = 0;
                         }
@@ -1108,7 +1115,6 @@ int main(int argc, char* argv[])
             treeLoc = 0;
             
             
-            
             SetUniform1Value(lightShaderProgram, "useTexture", textureFlag);
             //Calling the drawTree function (right side)
             for (int i = 350; i <= camLoc + 450; i++) {
@@ -1120,9 +1126,7 @@ int main(int argc, char* argv[])
                         if (coordsLoc < 999) {
                             coordsLoc += 1;
                             treeLoc += 1;
-                        }
-                        
-                        else {
+                        } else {
                             coordsLoc = 0;
                             treeLoc = 0;
                         }
@@ -1143,9 +1147,7 @@ int main(int argc, char* argv[])
                         if (coordsLoc < 999) {
                             coordsLoc += 1;
                             rockLoc += 1;
-                        }
-                        
-                        else {
+                        } else {
                             coordsLoc = 0;
                             rockLoc = 0;
                         }
@@ -1154,7 +1156,6 @@ int main(int argc, char* argv[])
                 
                 
             }
-            
             
             
         }//End of else statement
@@ -1167,14 +1168,13 @@ int main(int argc, char* argv[])
         drawCar(lightShaderProgram, vaos, carMove, carTextureID, tireTextureID);
         
         
-        
-        
-        
         glUseProgram(lightShaderProgram);
-        mat4 viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp); // Set the view matrix for first person camera and send to both shaders
+        mat4 viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt,
+                                 cameraUp); // Set the view matrix for first person camera and send to both shaders
         SetUniformMat4(lightShaderProgram, "viewMatrix", viewMatrix);
         SetUniformVec3(lightShaderProgram, "view_position", cameraPosition); // Set view position on scene shader
-        SetUniformMat4(lightShaderProgram, "projectionMatrix", projectionMatrix); // Set projection matrix on both shaders
+        SetUniformMat4(lightShaderProgram, "projectionMatrix",
+                       projectionMatrix); // Set projection matrix on both shaders
         
         
         
@@ -1216,12 +1216,9 @@ int main(int argc, char* argv[])
         
         // Clamp vertical angle to [-85, 85] degrees
         cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
-        if (cameraHorizontalAngle > 360)
-        {
+        if (cameraHorizontalAngle > 360) {
             cameraHorizontalAngle -= 360;
-        }
-        else if (cameraHorizontalAngle < -360)
-        {
+        } else if (cameraHorizontalAngle < -360) {
             cameraHorizontalAngle += 360;
         }
         
@@ -1232,11 +1229,6 @@ int main(int argc, char* argv[])
         vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
         
         glm::normalize(cameraSideVector);
-        
-        
-        
-        
-        
         
         
         if (lastLState == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) // turn car lights on and off
@@ -1380,30 +1372,14 @@ int main(int argc, char* argv[])
             
             if (camNum == 1) {
                 camNum = 2;
-            }
-            else if (camNum == 2) {
+            } else if (camNum == 2) {
                 camNum = 3;
-            }
-            else if (camNum == 3) {
+            } else if (camNum == 3) {
                 camNum = 4;
-            }
-            else if (camNum == 4) {
+            } else if (camNum == 4) {
                 camNum = 1;
             }
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
         
         viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
@@ -1419,10 +1395,7 @@ int main(int argc, char* argv[])
 }
 
 
-
-
-const char* getLightVertexShaderSource()
-{
+const char *getLightVertexShaderSource() {
     return
             "#version 330 core\n"
             ""
@@ -1456,8 +1429,7 @@ const char* getLightVertexShaderSource()
             "}";
 }
 
-const char* getLightFragmentShaderSource()
-{
+const char *getLightFragmentShaderSource() {
     return
             "#version 330 core\n"
             ""
@@ -1622,8 +1594,7 @@ return
 
 
 
-int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource)
-{
+int compileAndLinkShaders(const char *vertexShaderSource, const char *fragmentShaderSource) {
     // compile and link shader program
     // return shader program id
     // ------------------------------------
@@ -1637,8 +1608,7 @@ int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentSh
     int success;
     char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
@@ -1650,8 +1620,7 @@ int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentSh
     
     // check for shader compile errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
@@ -1675,8 +1644,7 @@ int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentSh
     return shaderProgram;
 }
 
-GLuint loadTexture(const char* filename)
-{
+GLuint loadTexture(const char *filename) {
     // Step1 Create and bind textures
     GLuint textureId = 0;
     glGenTextures(1, &textureId);
@@ -1691,9 +1659,8 @@ GLuint loadTexture(const char* filename)
     
     // Step3 Load Textures with dimension data
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
-    if (!data)
-    {
+    unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+    if (!data) {
         std::cerr << "Error::Texture could not load texture file:" << filename << std::endl;
         return 0;
     }
@@ -1715,8 +1682,7 @@ GLuint loadTexture(const char* filename)
     return textureId;
 }
 
-int createTexturedCubeVertexArrayObject()
-{
+int createTexturedCubeVertexArrayObject() {
     // Create a vertex array
     GLuint vertexArrayObject;
     glGenVertexArrays(1, &vertexArrayObject);
@@ -1733,7 +1699,7 @@ int createTexturedCubeVertexArrayObject()
                           GL_FLOAT,            // type
                           GL_FALSE,            // normalized?
                           sizeof(TexturedColoredVertex), // stride - each vertex contain 2 vec3 (position, color)
-                          (void*)0             // array buffer offset
+                          (void *) 0             // array buffer offset
     );
     glEnableVertexAttribArray(0);
     
@@ -1743,7 +1709,7 @@ int createTexturedCubeVertexArrayObject()
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(TexturedColoredVertex),
-                          (void*)sizeof(vec3)      // color is offseted a vec3 (comes after position)
+                          (void *) sizeof(vec3)      // color is offseted a vec3 (comes after position)
     );
     glEnableVertexAttribArray(1);
     
@@ -1752,15 +1718,14 @@ int createTexturedCubeVertexArrayObject()
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(TexturedColoredVertex),
-                          (void*)(2 * sizeof(vec3))      // uv is offseted by 2 vec3 (comes after position and color)
+                          (void *) (2 * sizeof(vec3))      // uv is offseted by 2 vec3 (comes after position and color)
     );
     glEnableVertexAttribArray(2);
     
     return vertexArrayObject;
 }
 
-int createLightCubeVertexArrayObject()
-{
+int createLightCubeVertexArrayObject() {
     // Create a vertex array
     GLuint lightCubeVAO;
     glGenVertexArrays(1, &lightCubeVAO);
@@ -1776,7 +1741,7 @@ int createLightCubeVertexArrayObject()
                           GL_FLOAT,            // type
                           GL_FALSE,            // normalized?
                           sizeof(TexturedColoredVertex), // stride - each vertex contain 2 vec3 (position, color)
-                          (void*)0             // array buffer offset
+                          (void *) 0             // array buffer offset
     );
     glEnableVertexAttribArray(0);
     
@@ -1786,7 +1751,7 @@ int createLightCubeVertexArrayObject()
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(TexturedColoredVertex),
-                          (void*)sizeof(vec3)      // color is offseted a vec3 (comes after position)
+                          (void *) sizeof(vec3)      // color is offseted a vec3 (comes after position)
     );
     glEnableVertexAttribArray(1);
     
@@ -1795,15 +1760,14 @@ int createLightCubeVertexArrayObject()
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(TexturedColoredVertex),
-                          (void*)(2 * sizeof(vec3))      // uv is offseted by 2 vec3 (comes after position and color)
+                          (void *) (2 * sizeof(vec3))      // uv is offseted by 2 vec3 (comes after position and color)
     );
     glEnableVertexAttribArray(2);
     
     return lightCubeVAO;
 }
 
-int createSphereObject()
-{
+int createSphereObject() {
     // A vertex is a point on a polygon, it contains positions and other data (eg: colors)
     unsigned int vaos;
     glGenVertexArrays(1, &vaos);
@@ -1821,12 +1785,10 @@ int createSphereObject()
     const unsigned int X_SEGMENTS = 64;
     const unsigned int Y_SEGMENTS = 64;
     const float PI = 3.14159265359;
-    for (unsigned int y = 0; y <= Y_SEGMENTS; ++y)
-    {
-        for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
-        {
-            float xSegment = (float)x / (float)X_SEGMENTS;
-            float ySegment = (float)y / (float)Y_SEGMENTS;
+    for (unsigned int y = 0; y <= Y_SEGMENTS; ++y) {
+        for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
+            float xSegment = (float) x / (float) X_SEGMENTS;
+            float ySegment = (float) y / (float) Y_SEGMENTS;
             float xPos = std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
             float yPos = std::cos(ySegment * PI);
             float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
@@ -1839,20 +1801,15 @@ int createSphereObject()
     }
     
     bool oddRow = false;
-    for (unsigned int y = 0; y < Y_SEGMENTS; ++y)
-    {
+    for (unsigned int y = 0; y < Y_SEGMENTS; ++y) {
         if (!oddRow) // even rows: y == 0, y == 2; and so on
         {
-            for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
-            {
+            for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
                 indices.push_back(y * (X_SEGMENTS + 1) + x);
                 indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
             }
-        }
-        else
-        {
-            for (int x = X_SEGMENTS; x >= 0; --x)
-            {
+        } else {
+            for (int x = X_SEGMENTS; x >= 0; --x) {
                 indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
                 indices.push_back(y * (X_SEGMENTS + 1) + x);
             }
@@ -1862,8 +1819,7 @@ int createSphereObject()
     indexCount = indices.size();
     
     std::vector<float> data;
-    for (unsigned int i = 0; i < positions.size(); ++i)
-    {
+    for (unsigned int i = 0; i < positions.size(); ++i) {
         data.push_back(positions[i].x);
         data.push_back(positions[i].y);
         data.push_back(positions[i].z);
@@ -1872,13 +1828,11 @@ int createSphereObject()
             data.push_back(colors[i].y);
             data.push_back(colors[i].z);
         }
-        if (uv.size() > 0)
-        {
+        if (uv.size() > 0) {
             data.push_back(uv[i].x);
             data.push_back(uv[i].y);
         }
-        if (normals.size() > 0)
-        {
+        if (normals.size() > 0) {
             data.push_back(normals[i].x);
             data.push_back(normals[i].y);
             data.push_back(normals[i].z);
@@ -1891,13 +1845,13 @@ int createSphereObject()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
     float stride = (3 + 2 + 3 + 3) * sizeof(float);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void *) 0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *) (6 * sizeof(float)));
     glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void *) (8 * sizeof(float)));
     
     glBindBuffer(GL_ARRAY_BUFFER, 0); // VAO already stored the state we just defined, safe to unbind buffer
     glBindVertexArray(0); // Unbind to not modify the VAO
@@ -1906,9 +1860,7 @@ int createSphereObject()
 }
 
 
-
-bool InitContext()
-{
+bool InitContext() {
     // Initialize GLFW and OpenGL version
     glfwInit();
 
