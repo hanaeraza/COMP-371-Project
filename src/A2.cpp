@@ -302,6 +302,9 @@ int main(int argc, char *argv[]) {
     GLint p_arrayS[1];
     GLint *currentvalueS = p_arrayS;
     
+    GLuint lightFlag = glGetUniformLocation(shaderScene, "lightsOn");
+    bool toggleLights = false;
+    glUniform1i(lightFlag, toggleLights);
     
     // Setup texture and framebuffer for creating shadow map
     
@@ -418,6 +421,7 @@ int main(int argc, char *argv[]) {
     glBindVertexArray(vao);
     int previousXstate = GLFW_RELEASE;
     int previousZstate = GLFW_RELEASE;
+    int previousLstate = GLFW_RELEASE;
     
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
@@ -602,6 +606,14 @@ int main(int argc, char *argv[]) {
             }
         }
         previousZstate = glfwGetKey(window, GLFW_KEY_Z);
+        
+        // Toggle lights
+        if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+            toggleLights = !toggleLights;
+            glUseProgram(shaderScene);
+            glUniform1i(lightFlag, toggleLights);
+        }
+        previousLstate = glfwGetKey(window, GLFW_KEY_L);
         
         
         double mousePosX, mousePosY;
