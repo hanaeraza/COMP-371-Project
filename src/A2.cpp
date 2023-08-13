@@ -38,78 +38,59 @@ using namespace std;
 struct WorldChunk;
 map<int, WorldChunk> chunksByPosition;
 
-// (Work in progress)
 struct TreePosition {
     
-    float x;
-    float z;
+    float x;           // Translation factor on x-axis
+    float z;           // Translation factor on y-axis
+    float size = 5.0f; // Scaling factor for the widest point aka the leaves (square shaped) + 1 for space in between
     
     explicit TreePosition(float startPositionZ) {
+        
+        // Generate random positions within the world chunk boundaries
         random_device dev;
         default_random_engine generator(dev());
-        uniform_real_distribution<float> xDistribution(-50.0, 50.0);
-        uniform_real_distribution<float> zDistribution(static_cast<double>(startPositionZ) - 50.0,
-                                                       static_cast<double>(startPositionZ) + 50.0);
+        uniform_real_distribution<float> xDistribution(-50.0f + (size / 2.0f), 50.0f - (size / 2.0f));
+        uniform_real_distribution<float> zDistribution(startPositionZ + (size / 2.0f),
+                                                       startPositionZ + 100.0f - (size / 2.0f));
         
         x = xDistribution(generator);
         z = zDistribution(generator);
     };
     
-    mat4 getTreeMatrix() const {
-        return translate(mat4(1.0f), vec3(x, 0.0f, z));
-    }
-    
-    bool operator==(const TreePosition &rhs) const {
-        return std::tie(x, z) == std::tie(rhs.x, rhs.z);
-    }
-    
-    bool operator!=(const TreePosition &rhs) const {
-        return !(rhs == *this);
-    }
 };
-
-namespace std {
-    template<>
-    struct hash<std::pair<int, int>> {
-        size_t operator()(const std::pair<int, int> &p) const {
-            return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
-        }
-    };
-}
 
 struct WorldChunk {
     
     vector<TreePosition> treeData;
-    unordered_set<pair<int, int>> occupiedGrids;
-    
+    array<std::array<bool, 101>, 101> occupiedGrids = {}; // Fill with false for all rows & cols
     float chunkPositionZ;
     int chunkPositionID;
     
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
+
         generateTrees(50);
     };
     
     bool insertTree(TreePosition tree) {
         
-        int x = static_cast<int>(tree.x);
-        int z = static_cast<int>(tree.z);
+        // Convert tree position to range [0, 100]
+        int x = static_cast<int>(tree.x + 50 - (tree.size / 2));
+        int z = static_cast<int>(tree.z) - (100 * chunkPositionID + 50) - 2;
         
-        if (occupiedGrids.contains(make_pair(x, z))) {
-            return false;
+        // Check if the generated tree positions are already occupied
+        for (int i = x; i < 5 + x; i++) {
+            for (int j = z; j < 5 + z; j++) {
+                if (occupiedGrids[i][j]) {
+                    return false;
+                }
+            }
         }
         
-        int treeWidth = 12;
-        int treeDepth = 12;
-        int offsetX = treeWidth / 2 + 1;
-        int offsetZ = treeDepth / 2 + 1;
-        
-        x -= offsetX;
-        z -= offsetZ;
-        
-        for (; x < offsetX * 2; x++) {
-            for (; z < offsetZ * 2; z++) {
-                occupiedGrids.insert(make_pair(x, z));
+        // Mark the new tree positions as occupied
+        for (int i = x; i < 5 + x; i++) {
+            for (int j = z; j < 5 + z; j++) {
+                    occupiedGrids[i][j] = true;
             }
         }
         
@@ -125,7 +106,7 @@ struct WorldChunk {
         }
     }
     
-    mat4 getGroundMatrix() const {
+    [[nodiscard]] mat4 getGroundMatrix() const {
         return translate(mat4(1.0f), vec3(0.0f, -0.09f, chunkPositionZ)) *
                scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
     }
