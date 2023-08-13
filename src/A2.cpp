@@ -3,10 +3,8 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <unordered_set>
 #include <map>
 #include <random>
-#include <utility>
 #include <cmath>
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
@@ -124,8 +122,7 @@ GLuint loadCubemap(vector<std::string> faces);
 
 GLuint createSkyboxObject();
 
-void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ);
+void renderScene(GLuint shader, int texturedCubeVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -276,11 +273,10 @@ int main(int argc, char *argv[]) {
                                      shaderPathPrefix + "skybox.frag");
     
     // Load Textures
-    GLuint brickTextureID = loadTexture((pathPrefix + "assets/textures/brick.jpg").c_str());
-    GLuint cementTextureID = loadTexture((pathPrefix + "assets/textures/cement.jpg").c_str());
-    GLuint tennisTextureID = loadTexture((pathPrefix + "assets/textures/tennisball.jpg").c_str());
-    GLuint glossyTextureID = loadTexture((pathPrefix + "assets/textures/glossy2.jpg").c_str());
-    GLuint clayTextureID = loadTexture((pathPrefix + "assets/textures/clay3.jpg").c_str());
+    GLuint stoneTextureID = loadTexture((pathPrefix + "assets/textures/cobblestone.jpg").c_str());
+    GLuint grassTextureID = loadTexture((pathPrefix + "assets/textures/grass.jpg").c_str());
+    GLuint leavesTextureID = loadTexture((pathPrefix + "assets/textures/leaves.jpg").c_str());
+    GLuint barkTextureID = loadTexture((pathPrefix + "assets/textures/bark.jpg").c_str());
     GLuint noTextureID = loadTexture((pathPrefix + "assets/textures/white.jpg").c_str());
     
     vector<std::string> skyFaces{
@@ -397,8 +393,9 @@ int main(int argc, char *argv[]) {
     SetUniform1fValue(shaderScene, "light_cutoff_outer", cos(radians(lightAngleOuter)));
     
     // Set light color on scene shader
-    SetUniformVec3(shaderScene, "light_color", lightColor);
-    
+    SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
+    SetUniformVec3(shaderScene, "fog_light_color", vec3(1.0, 1.0, 1.0));
+
     // Set object color on scene shader
     SetUniformVec3(shaderScene, "object_color", vec3(1.0, 1.0, 1.0));
     
@@ -439,9 +436,12 @@ int main(int argc, char *argv[]) {
         
         // light parameters
         vec3 lightPosition = vec3(1.0f, 20.0f, 5.0f); // the location of the light in 3D space
+        vec3 fogLightPosition = cameraPosition; // the location of the light in 3D space
         vec3 lightFocus(0.0, -1.0, 0.0);      // the point in 3D space the light "looks" at
-        vec3 lightDirection = normalize(lightFocus - lightPosition);
-        
+        //vec3 lightDirection = normalize(lightFocus - lightPosition);
+        vec3 lightDirection = vec3(-0.2f, -1.0f, -0.3f);
+        vec3 fogLightDirection = normalize(lightFocus - fogLightPosition);
+
         float lightNearPlane = 1.0f;
         float lightFarPlane = 180.0f;
         
@@ -461,11 +461,13 @@ int main(int argc, char *argv[]) {
         
         // Set light position on scene shader
         SetUniformVec3(shaderScene, "light_position", lightPosition);
-        
+        SetUniformVec3(shaderScene, "fog_light_position", fogLightPosition);
+
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
-        
-        
+        SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
+
+
         // Set model matrix and send to both shaders
         mat4 modelMatrix = mat4(1.0f);
         
@@ -507,8 +509,7 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderShadow, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID,
-                        cameraPosition.z);
+            renderScene(shaderScene, vao, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -527,7 +528,7 @@ int main(int argc, char *argv[]) {
             // Bind screen as output framebuffer
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             // Clear color and depth data on framebuffer
-            glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+            glClearColor(0.05f, 0.07f, 0.11f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             // Bind depth map texture: not needed, by default it is active
             //glActiveTexture(GL_TEXTURE0);
@@ -539,15 +540,14 @@ int main(int argc, char *argv[]) {
             
             // Draw textured geometry
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, brickTextureID);
+            glBindTexture(GL_TEXTURE_2D, stoneTextureID);
             // Bind geometry
             
             GLuint worldMatrixLocation = glGetUniformLocation(shaderScene, "model_matrix");
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, sphereVAO, tennisTextureID, glossyTextureID, clayTextureID, noTextureID,
-                        cameraPosition.z);
+            renderScene(shaderScene, vao, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -568,7 +568,7 @@ int main(int argc, char *argv[]) {
         glfwPollEvents();
         
         // Handle inputs
-        
+{
         // Escape
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
@@ -767,21 +767,27 @@ int main(int argc, char *argv[]) {
             {
                 cameraPosition += cameraSideVector * currentCameraSpeed * dt;
             }
-            
-            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera up
+
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition -= moveDirection * currentCameraSpeed * dt;
             }
-            
-            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera down
+
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
             {
                 vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
                 cameraPosition += moveDirection * currentCameraSpeed * dt;
                 cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
             }
-            
-            
+
+            // walking boundaries
+            if (cameraPosition.x > 5.0f)
+                cameraPosition.x = 5.0f;
+            if (cameraPosition.x < -5.0f)
+                cameraPosition.x = -5.0f;
+
+
             viewMatrix = mat4(1.0);
             
             if (cameraFirstPerson) {
@@ -842,7 +848,8 @@ int main(int argc, char *argv[]) {
                 viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
             }
         }
-        
+}
+
     }
     
     
@@ -1155,9 +1162,8 @@ int createSphereObject() {
 
 int lastChunkID = -100;
 
-void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tennisTextureID, GLuint glossyTextureID,
-                 GLuint clayTextureID, GLuint noTextureID, float cameraPosZ) {
-    
+void renderScene(GLuint shader, int texturedCubeVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID) {
+
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
@@ -1179,16 +1185,24 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
         
         // Floor
         mat4 courtWorldMatrix = chunk.getGroundMatrix();
-        glBindTexture(GL_TEXTURE_2D, clayTextureID);
+        glBindTexture(GL_TEXTURE_2D, grassTextureID);
         worldMatrix = courtWorldMatrix;
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
+        // Road
+        courtWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, static_cast<float>((100 * currentChunkID) + 50))) * scale(mat4(1.0f), vec3(10.0f, 0.3f, 300.0f));
+        glBindTexture(GL_TEXTURE_2D, stoneTextureID);
+        worldMatrix = courtWorldMatrix;
+        setWorldMatrix(shader, worldMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
         for (auto tree: chunk.treeData) {
-            glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
             // Draw tree
             // Trunk
+            glBindTexture(GL_TEXTURE_2D, barkTextureID); // no texture
             mat4 treeWorldMatrix =
                     translate(mat4(1.0f), vec3(tree.x, 2.5f, tree.z)) * scale(mat4(1.0f), vec3(1.0f, 5.0f, 1.0f));
             worldMatrix = treeWorldMatrix;
@@ -1197,6 +1211,7 @@ void renderScene(GLuint shader, int texturedCubeVAO, int sphereVAO, GLuint tenni
             glDrawArrays(GL_TRIANGLES, 0, 36);
             
             // Leaves
+            glBindTexture(GL_TEXTURE_2D, leavesTextureID);
             treeWorldMatrix =
                     translate(mat4(1.0f), vec3(tree.x, 5.0f, tree.z)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
             worldMatrix = treeWorldMatrix;
