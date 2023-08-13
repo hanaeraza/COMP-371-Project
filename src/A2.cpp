@@ -509,7 +509,7 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
+            renderScene(shaderShadow, vao, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID);
             
             // Unbind geometry
             glBindVertexArray(0);
