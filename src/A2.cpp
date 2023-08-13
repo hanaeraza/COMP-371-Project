@@ -43,18 +43,22 @@ map<int, WorldChunk> chunksByPosition;
 
 struct TreePosition {
     
-    float x;           // Translation factor on x-axis
-    float z;           // Translation factor on y-axis
-    float size = 5.0f; // Scaling factor for the widest point aka the leaves (square shaped) + 1 for space in between
+    float x;              // Translation factor on x-axis
+    float z;              // Translation factor on y-axis
+    float size = 5.0f;    // Scaling factor for the widest point aka the leaves (square shaped) + 1 for space in between
+    float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
+    float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
     
-    explicit TreePosition(float startPositionZ) {
+    explicit TreePosition(float startPositionZ, bool leftSide = false) {
+        float startPositionY = (size / 2.0f) + (leftSide ? - gridSize / 2.0f : roadWidth / 2.0f);
+        float endPositionY = - (size / 2.0f) + (leftSide ? - roadWidth / 2.0f : gridSize / 2.0f);
         
         // Generate random positions within the world chunk boundaries
         random_device dev;
         default_random_engine generator(dev());
-        uniform_real_distribution<float> xDistribution(-50.0f + (size / 2.0f), 50.0f - (size / 2.0f));
+        uniform_real_distribution<float> xDistribution(startPositionY, endPositionY);
         uniform_real_distribution<float> zDistribution(startPositionZ + (size / 2.0f),
-                                                       startPositionZ + 100.0f - (size / 2.0f));
+                                                       startPositionZ + gridSize - (size / 2.0f));
         
         x = xDistribution(generator);
         z = zDistribution(generator);
@@ -65,20 +69,21 @@ struct TreePosition {
 struct WorldChunk {
     
     vector<TreePosition> treeData;
-    array<std::array<bool, 101>, 101> occupiedGrids = {}; // Fill with false for all rows & cols
+    array<std::array<bool, 47>, 101> occupiedGrids = {}; // Fill with false for all rows & cols
+//    array<std::array<bool, 48>, 48> occupiedGridsRight = {}; // Fill with false for all rows & cols
     float chunkPositionZ;
     int chunkPositionID;
     
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
 
-        generateTrees(50);
+        generateTrees(1000);
     };
     
     bool insertTree(TreePosition tree) {
         
-        // Convert tree position to range [0, 100]
-        int x = static_cast<int>(tree.x + 50 - (tree.size / 2));
+        // Convert tree position to range [0, 48]
+        int x = static_cast<int>(tree.x + 49 - (tree.size / 2));
         int z = static_cast<int>(tree.z) - (100 * chunkPositionID + 50) - 2;
         
         // Check if the generated tree positions are already occupied
@@ -104,8 +109,9 @@ struct WorldChunk {
     
     void generateTrees(int numOfTrees) {
         while (numOfTrees != 0) {
-            bool treeInserted = insertTree(TreePosition(chunkPositionZ));
-            numOfTrees--;
+            insertTree(TreePosition(chunkPositionZ));
+            insertTree(TreePosition(chunkPositionZ, true));
+            numOfTrees -= 2;
         }
     }
     
