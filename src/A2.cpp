@@ -1,14 +1,11 @@
-//
-// COMP 371 Labs Framework
-//
-// Created by Nicolas Bergeron on 20/06/2019.
-//
 
 #include <iostream>
 #include <list>
-#include <random>
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <random>
+#include <cmath>
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
 #include <GL/glew.h>    // Include GLEW - OpenGL Extension Wrangler
@@ -23,6 +20,9 @@
 
 #include <stb_image.h>
 
+using namespace glm;
+using namespace std;
+
 #if defined(__APPLE__)
 std::string pathPrefix = "../";
 #else
@@ -30,8 +30,7 @@ string pathPrefix = "";
 #endif
 
 
-using namespace glm;
-using namespace std;
+
 
 unsigned int indexCount;
 
