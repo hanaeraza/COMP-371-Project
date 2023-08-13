@@ -507,7 +507,8 @@ int main(int argc, char* argv[])
     int lastCState = GLFW_RELEASE;
     int shaderMode = 0;
     
-    
+    //For toggling lights
+    int lastLState = GLFW_RELEASE;
     
     
     
@@ -577,6 +578,7 @@ int main(int argc, char* argv[])
         //Keeps track of keys
         lastCState = glfwGetKey(window, GLFW_KEY_C);
         lastSpaceState = glfwGetKey(window, GLFW_KEY_SPACE);
+        lastLState = glfwGetKey(window, GLFW_KEY_L);
         
         
         // Frame time calculation
@@ -598,7 +600,7 @@ int main(int argc, char* argv[])
         if (camNum == 1) {cameraPosition= vec3(0.0f+carMove.x, 3.0f, 0.0f + carMove.z);}
         else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
         else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
-        else {}
+        else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
         
         
         // Light parameters for point light (light one)
@@ -631,8 +633,8 @@ int main(int argc, char* argv[])
         vec3 lightFocus2(0.0, -1.0, 10.0 + carMove.z);      // the point in 3D space the light "looks" at
         vec3 lightDirection2 = normalize(lightFocus2 - lightPosition2);
         
-        float lightNearPlane2 = 0.0f; //1
-        float lightFarPlane2 = 15.0f; //180
+        float lightNearPlane2 = 1.0f; //1
+        float lightFarPlane2 = 2.0f; //180
         
         mat4 lightProjectionMatrix2 = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane2, lightFarPlane2);
         mat4 lightViewMatrix2 = lookAt(lightPosition2, lightFocus2, vec3(0.0f, 1.0f, 0.0f));
@@ -648,6 +650,13 @@ int main(int argc, char* argv[])
         
         SetUniformVec3(lightShaderProgram, "light_position2", lightPosition2); // Set light position on scene shader
         SetUniformVec3(lightShaderProgram, "light_direction2", lightDirection2); // Set light direction on scene shader
+        
+        //Angles for rotating spotlight
+        float lightAngleOuter2 = 2.0;
+        float lightAngleInner2 = 1.0;
+        // Set light cutoff angles on scene shader
+        SetUniformfvalue(lightShaderProgram, "light_cutoff_inner2", cos(radians(lightAngleInner2)));
+        SetUniformfvalue(lightShaderProgram, "light_cutoff_outer2", cos(radians(lightAngleOuter2)));
         
         
         
@@ -1156,7 +1165,7 @@ int main(int argc, char* argv[])
         
         
         
-        if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) // turn car lights on and off
+        if (lastLState == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) // turn car lights on and off
         {
             if (carLight == 0) { carLight = 1; }
             else { carLight = 0; }
@@ -1186,20 +1195,6 @@ int main(int argc, char* argv[])
             angley += 0.05f;
         }
         
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) // move camera to the right
-        {
-            camNum = 1;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) // move camera to the right
-        {
-            camNum = 2;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) // move camera to the right
-        {
-            camNum = 3;
-        }
         
         //Move the camera left
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
@@ -1309,11 +1304,17 @@ int main(int argc, char* argv[])
         //Change between aerial and person view
         if (lastCState == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
             
-            if (cameraPosition.y == 3.0) {
-                cameraPosition.y = 30.0;
+            if (camNum == 1) {
+                camNum = 2;
             }
-            else {
-                cameraPosition.y = 3.0;
+            else if (camNum == 2) {
+                camNum = 3;
+            }
+            else if (camNum == 3) {
+                camNum = 4;
+            }
+            else if (camNum == 4) {
+                camNum = 1;
             }
         }
         
