@@ -6,6 +6,7 @@
 #include <map>
 #include <random>
 #include <cmath>
+#include <array>
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
 
@@ -43,19 +44,22 @@ map<int, WorldChunk> chunksByPosition;
 
 struct TreePosition {
     
+    float startPositionZ; // The lower z-boundary of the world chunk which the tree will be positioned on
     float x;              // Translation factor on x-axis
     float z;              // Translation factor on y-axis
-    float size = 5.0f;    // Scaling factor for the widest point aka the leaves (square shaped) + 1 for space in between
+    float treeSize;           // Scaling factor for the widest point aka the leaves (square shaped) + 1 for space in between
     float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
     float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
     bool leftSide;
     
-    explicit TreePosition(float startPositionZ, bool leftSide = false) : leftSide(leftSide){
+    TreePosition(float startPositionZ, float treeSize, bool leftSide = false) : startPositionZ(startPositionZ),
+                                                                                treeSize(treeSize), leftSide(leftSide) {
+        treeSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
         
         // start left = -47.5   start right = 5.5
         //   end left =  -5.5     end right = 47.5
-        float startPositionY = (size / 2.0f) + (leftSide ? - gridSize / 2.0f : roadWidth / 2.0f);
-        float endPositionY = - (size / 2.0f) + (leftSide ? - roadWidth / 2.0f : gridSize / 2.0f);
+        float startPositionY = (treeSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
+        float endPositionY = -(treeSize / 2.0f) + (leftSide ? -roadWidth / 2.0f : gridSize / 2.0f);
         
         // Generate random positions within the world chunk boundaries
         random_device dev;
@@ -63,8 +67,8 @@ struct TreePosition {
         
         // 2.5, 97.5
         uniform_real_distribution<float> xDistribution(startPositionY, endPositionY);
-        uniform_real_distribution<float> zDistribution(startPositionZ + (size / 2.0f),
-                                                       startPositionZ + gridSize - (size / 2.0f));
+        uniform_real_distribution<float> zDistribution(startPositionZ + (treeSize / 2.0f),
+                                                       startPositionZ + gridSize - (treeSize / 2.0f));
         
         x = xDistribution(generator);
         z = zDistribution(generator);
@@ -74,7 +78,8 @@ struct TreePosition {
 
 struct WorldChunk {
     
-    vector<TreePosition> treeData;
+    vector<TreePosition> bigTreePositions;
+    vector<TreePosition> smallTreePositions;
     
     // num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
     bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
@@ -84,20 +89,21 @@ struct WorldChunk {
     
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
-
+        
         generateTrees(100);
     };
     
-    bool insertTree(TreePosition treePos) {
+    bool insertTree(TreePosition treePos, bool bigTree) {
+        vector<TreePosition> &treePositions = bigTree ? bigTreePositions : smallTreePositions;
         bool (&occupiedGrids)[48][101] = treePos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
         
         // Convert tree position to range [0, 47] and [0, 100]
-        int x = static_cast<int>(treePos.x + 50 - (treePos.size / 2)) + (treePos.leftSide ? 0 : - 53);
+        int x = static_cast<int>(treePos.x + 50 - (treePos.treeSize / 2)) + (treePos.leftSide ? 0 : -53);
         int z = static_cast<int>(treePos.z) - (100 * chunkPositionID + 50) - 2;
         
         // Check if the generated tree positions are already occupied
-        for (int i = x; i < 5 + x; i++) {
-            for (int j = z; j < 5 + z; j++) {
+        for (int i = x; i < treePos.treeSize + x; i++) {
+            for (int j = z; j < treePos.treeSize + z; j++) {
                 if (occupiedGrids[i][j]) {
                     return false;
                 }
@@ -105,22 +111,28 @@ struct WorldChunk {
         }
         
         // Mark the new tree positions as occupied
-        for (int i = x; i < 5 + x; i++) {
-            for (int j = z; j < 5 + z; j++) {
-                    occupiedGrids[i][j] = true;
+        for (int i = x; i < treePos.treeSize + x; i++) {
+            for (int j = z; j < treePos.treeSize + z; j++) {
+                occupiedGrids[i][j] = true;
             }
         }
         
-        treeData.push_back(treePos);
+        treePositions.push_back(treePos);
         
         return true;
     }
     
     void generateTrees(int numOfTrees) {
         while (numOfTrees != 0) {
-            insertTree(TreePosition(chunkPositionZ));
-            insertTree(TreePosition(chunkPositionZ, true));
-            numOfTrees -= 2;
+            // Big trees on right & left sides
+            insertTree(TreePosition(chunkPositionZ, 12.0f, false), true);
+            insertTree(TreePosition(chunkPositionZ, 12.0f, true), true);
+            
+            // Small trees on right & left sides
+            insertTree(TreePosition(chunkPositionZ, 5.0f, false), false);
+            insertTree(TreePosition(chunkPositionZ, 5.0f, true), false);
+            
+            numOfTrees -= 4;
         }
     }
     
@@ -147,7 +159,9 @@ GLuint loadCubemap(vector<std::string> faces);
 
 GLuint createSkyboxObject();
 
-void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID, GLuint carTextureID, GLuint tireTextureID, vec3 carMove);
+void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID,
+                 GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID,
+                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -279,6 +293,92 @@ void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
     glUseProgram(shaderProgram);
     GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "model_matrix");
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &_worldMatrix[0][0]);
+}
+
+void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint woodText, GLuint leafText) {
+    
+    if (tree == 1) {
+        mat4 scaleDown = scale(mat4(1.0f), vec3(0.75f));
+        mat4 translateXZ = translate(mat4(1.0f), vec3(x, 0.0f, z));
+        //Trunk
+        glBindTexture(GL_TEXTURE_2D, woodText);
+        
+        mat4 trunkMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 5.0f, 0.0f)) * scale(mat4(1.0f), vec3(3.0f, 20.0f, 3.0f));
+        trunkMatrix = translateXZ * scaleDown * trunkMatrix;
+        SetUniformMat4(shader, "model_matrix", trunkMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.267f, 0.129f, 0.004f)); // Brown
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        //Top leaves
+        glBindTexture(GL_TEXTURE_2D, leafText);
+        
+        mat4 leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 10.0f, 0.0f)) * scale(mat4(1.0f), vec3(12.0f, 2.0f, 12.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 12.0f, 0.0f)) * scale(mat4(1.0f), vec3(10.0f, 2.0f, 10.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 14.0f, 0.0f)) * scale(mat4(1.0f), vec3(8.0f, 2.0f, 8.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 16.0f, 0.0f)) * scale(mat4(1.0f), vec3(6.0f, 2.0f, 6.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 18.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.0f, 2.0f, 4.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 20.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        leavesMatrix =
+                translate(mat4(1.0f), vec3(0.0f, 21.5f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f));
+        leavesMatrix = translateXZ * scaleDown * leavesMatrix;
+        SetUniformMat4(shader, "model_matrix", leavesMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+        glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+    } else if (tree == 2) {
+        //Trunk
+        mat4 groundWorldMatrix =
+                translate(mat4(1.0f), vec3(x, 3.0f, z)) * scale(mat4(1.0f), vec3(1.0f, 6.0f, 1.0f));
+        glBindTexture(GL_TEXTURE_2D, woodText);
+        SetUniformVec3(shader, "object_color", vec3(150.0 / 255.0, 75.0 / 255.0, 0.0f));
+        SetUniformMat4(shader, "model_matrix", groundWorldMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        //Leaves
+        groundWorldMatrix =
+                translate(mat4(1.0f), vec3(x, 7.5f, z)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
+        glBindTexture(GL_TEXTURE_2D, leafText);
+        SetUniformVec3(shader, "object_color", vec3(0.0, 1.0, 0.0f));
+        SetUniformMat4(shader, "model_matrix", groundWorldMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 }
 
 void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint tireText) {
@@ -556,7 +656,7 @@ int main(int argc, char *argv[]) {
     mat4 viewMatrix = lookAt(cameraPosition,                // eye
                              cameraPosition + cameraLookAt, // center
                              cameraUp);                     // up
-                             
+    
     // Set projection matrix on both shaders
     SetUniformMat4(shaderScene, "projection_matrix", projectionMatrix);
     
@@ -573,7 +673,7 @@ int main(int argc, char *argv[]) {
     // Set light color on scene shader
     SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
     SetUniformVec3(shaderScene, "fog_light_color", vec3(1.0, 1.0, 1.0));
-
+    
     // Set object color on scene shader
     SetUniformVec3(shaderScene, "object_color", vec3(1.0, 1.0, 1.0));
     
@@ -622,7 +722,7 @@ int main(int argc, char *argv[]) {
         //vec3 lightDirection = normalize(lightFocus - lightPosition);
         vec3 lightDirection = vec3(-0.2f, -1.0f, -0.3f);
         vec3 fogLightDirection = normalize(lightFocus - fogLightPosition);
-
+        
         float lightNearPlane = 1.0f;
         float lightFarPlane = 180.0f;
         
@@ -643,12 +743,12 @@ int main(int argc, char *argv[]) {
         // Set light position on scene shader
         SetUniformVec3(shaderScene, "light_position", lightPosition);
         SetUniformVec3(shaderScene, "fog_light_position", fogLightPosition);
-
+        
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
         SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
-
-
+        
+        
         // Set model matrix and send to both shaders
         mat4 modelMatrix = mat4(1.0f);
         
@@ -690,7 +790,8 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderShadow, vao, sphereVAO,cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
+            renderScene(shaderShadow, vao, sphereVAO, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID,
+                        leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -728,7 +829,8 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID, leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
+            renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID,
+                        leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -749,193 +851,61 @@ int main(int argc, char *argv[]) {
         glfwPollEvents();
         
         // Handle inputs
-{
-        // Escape
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, true);
-        
-        
-        // Toggle texture
-        if (previousXstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-            glGetUniformiv(shaderScene, textureflag, currentvalue);
-            if (currentvalue[0] == 1) {
-                glUseProgram(shaderScene);
-                glUniform1i(textureflag, 0);
-            } else {
-                
-                glUseProgram(shaderScene);
-                glUniform1i(textureflag, 1);
+        {
+            // Escape
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+                glfwSetWindowShouldClose(window, true);
+            
+            
+            // Toggle texture
+            if (previousXstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+                glGetUniformiv(shaderScene, textureflag, currentvalue);
+                if (currentvalue[0] == 1) {
+                    glUseProgram(shaderScene);
+                    glUniform1i(textureflag, 0);
+                } else {
+                    
+                    glUseProgram(shaderScene);
+                    glUniform1i(textureflag, 1);
+                }
             }
-        }
-        previousXstate = glfwGetKey(window, GLFW_KEY_X);
-        
-        
-        // Toggle shadow
-        if (previousZstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-            glGetUniformiv(shaderScene, shadowflag, currentvalueS);
-            if (currentvalueS[0] == 1) {
-                glUseProgram(shaderScene);
-                glUniform1i(shadowflag, 0);
-            } else {
-                
-                glUseProgram(shaderScene);
-                glUniform1i(shadowflag, 1);
+            previousXstate = glfwGetKey(window, GLFW_KEY_X);
+            
+            
+            // Toggle shadow
+            if (previousZstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+                glGetUniformiv(shaderScene, shadowflag, currentvalueS);
+                if (currentvalueS[0] == 1) {
+                    glUseProgram(shaderScene);
+                    glUniform1i(shadowflag, 0);
+                } else {
+                    
+                    glUseProgram(shaderScene);
+                    glUniform1i(shadowflag, 1);
+                }
             }
-        }
-        previousZstate = glfwGetKey(window, GLFW_KEY_Z);
-        
-        // Toggle lights
-        if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-            toggleLights = !toggleLights;
-            glUseProgram(shaderScene);
-            glUniform1i(lightFlag, toggleLights);
-        }
-        previousLstate = glfwGetKey(window, GLFW_KEY_L);
-        
-        
-        double mousePosX, mousePosY;
-        glfwGetCursorPos(window, &mousePosX, &mousePosY);
-        
-        double dx = mousePosX - lastMousePosX;
-        double dy = mousePosY - lastMousePosY;
-        
-        lastMousePosX = mousePosX;
-        lastMousePosY = mousePosY;
-        
-        // Convert to spherical coordinates
-        const float cameraAngularSpeed = 60.0f;
-        cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-        cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
-        
-        // Clamp vertical angle to [-85, 85] degrees
-        cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
-        if (cameraHorizontalAngle > 360) {
-            cameraHorizontalAngle -= 360;
-        } else if (cameraHorizontalAngle < -360) {
-            cameraHorizontalAngle += 360;
-        }
-        
-        float theta = radians(cameraHorizontalAngle);
-        float phi = radians(cameraVerticalAngle);
-        
-        
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // close window
-            glfwSetWindowShouldClose(window, true);
-        
-        
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) && dx > 0) // moving left, zoom in
-        {
-            fov += 1.0f;
-        }
-        
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) && dx < 0) // moving right, zoom out
-        {
-            fov -= 1.0f;
-        }
-        
-        
-        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) // scale object up
-        {
-            scaling.x += 0.1f;
-            scaling.y += 0.1f;
-            scaling.z += 0.1f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) // scale object down
-        {
-            scaling.x -= 0.1f;
-            scaling.y -= 0.1f;
-            scaling.z -= 0.1f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move object to the left
-        {
-            position.x -= 0.1f;
+            previousZstate = glfwGetKey(window, GLFW_KEY_Z);
             
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move object to the right
-        {
-            position.x += 0.1f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move object down
-        {
-            position.y -= 0.1f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move object up
-        {
-            position.y += 0.1f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate object to the left
-        {
-            rotation += 5.0f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate object to the right
-        {
-            rotation -= 5.0f;
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) // reset object back to origin
-        {
-            position.x = 0.0f;
-            position.y = 0.0f;
-            position.z = 0.0f;
+            // Toggle lights
+            if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+                toggleLights = !toggleLights;
+                glUseProgram(shaderScene);
+                glUniform1i(lightFlag, toggleLights);
+            }
+            previousLstate = glfwGetKey(window, GLFW_KEY_L);
             
-            scaling.x = 1.0f;
-            scaling.y = 1.0f;
-            scaling.z = 1.0f;
-            rotation = 0.0f;
             
-        }
-        
-        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) // zoom out
-        {
-            fov += 1.0f;
-        }
-        
-        
-        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) // zoom in
-        {
-            fov -= 1.0f;
-        }
-    
-    //Change between aerial and person view
-    if (lastCState == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-        
-        if (camNum == 1) {
-            camNum = 2;
-        } else if (camNum == 2) {
-            camNum = 3;
-        } else if (camNum == 3) {
-            camNum = 4;
-        } else if (camNum == 4) {
-            camNum = 1;
-        }
-    }
-    lastCState = glfwGetKey(window, GLFW_KEY_C);
-        
-        // Free camera, default
-        if (selection == 0) {
-            
-            cameraPosition = cameraPositionWalking;
-            
-            bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                           glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-            float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
-            
+            double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
-            dx = mousePosX - lastMousePosX;
-            dy = mousePosY - lastMousePosY;
+            double dx = mousePosX - lastMousePosX;
+            double dy = mousePosY - lastMousePosY;
             
             lastMousePosX = mousePosX;
             lastMousePosY = mousePosY;
             
             // Convert to spherical coordinates
+            const float cameraAngularSpeed = 60.0f;
             cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
             cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
             
@@ -947,125 +917,257 @@ int main(int argc, char *argv[]) {
                 cameraHorizontalAngle += 360;
             }
             
-            theta = radians(cameraHorizontalAngle);
-            phi = radians(cameraVerticalAngle);
-            
-            cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-            vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
-            
-            glm::normalize(cameraSideVector);
-            
-            if (camNum == 1) { cameraPosition = vec3(0.0f + carMove.x, 3.0f, 0.0f + carMove.z); }
-            else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
-            else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
-            else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
+            float theta = radians(cameraHorizontalAngle);
+            float phi = radians(cameraVerticalAngle);
             
             
-            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // close window
+                glfwSetWindowShouldClose(window, true);
+            
+            
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) && dx > 0) // moving left, zoom in
             {
-                cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
-                
-                carMove -= cameraSideVector * currentCameraSpeed * dt;
+                fov += 1.0f;
             }
             
-            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) && dx < 0) // moving right, zoom out
             {
-                cameraPosition += cameraSideVector * currentCameraSpeed * dt;
-                
-                carMove += cameraSideVector * currentCameraSpeed * dt;
-            }
-
-            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
-            {
-                vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
-                cameraPosition -= moveDirection * currentCameraSpeed * dt;
-                
-                carMove -=  moveDirection * currentCameraSpeed * dt;
-            }
-
-            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
-            {
-                vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
-                cameraPosition += moveDirection * currentCameraSpeed * dt;
-                
-                carMove +=  moveDirection * currentCameraSpeed * dt;
-                
-                cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
-            }
-
-            // walking boundaries
-            if (cameraPosition.x > 2.0f)
-                cameraPosition.x = 2.0f;
-            if (cameraPosition.x < -2.0f)
-                cameraPosition.x = -2.0f;
-            if (carMove.x > 2.0f)
-                carMove.x = 2.0f;
-            if (carMove.x < -2.0f)
-                carMove.x = -2.0f;
-
-
-            viewMatrix = mat4(1.0);
-            
-            if (cameraFirstPerson) {
-                viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-            } else {
-                float radius = 5.0f;
-                position = cameraPosition - radius * cameraLookAt;
-                viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
+                fov -= 1.0f;
             }
             
-            // Keep track of walking position for when camera is changed to birds eye
-            cameraPositionWalking = cameraPosition;
+            
+            if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) // scale object up
+            {
+                scaling.x += 0.1f;
+                scaling.y += 0.1f;
+                scaling.z += 0.1f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) // scale object down
+            {
+                scaling.x -= 0.1f;
+                scaling.y -= 0.1f;
+                scaling.z -= 0.1f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move object to the left
+            {
+                position.x -= 0.1f;
+                
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move object to the right
+            {
+                position.x += 0.1f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move object down
+            {
+                position.y -= 0.1f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move object up
+            {
+                position.y += 0.1f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate object to the left
+            {
+                rotation += 5.0f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate object to the right
+            {
+                rotation -= 5.0f;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) // reset object back to origin
+            {
+                position.x = 0.0f;
+                position.y = 0.0f;
+                position.z = 0.0f;
+                
+                scaling.x = 1.0f;
+                scaling.y = 1.0f;
+                scaling.z = 1.0f;
+                rotation = 0.0f;
+                
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) // zoom out
+            {
+                fov += 1.0f;
+            }
+            
+            
+            if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) // zoom in
+            {
+                fov -= 1.0f;
+            }
+            
+            //Change between aerial and person view
+            if (lastCState == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+                
+                if (camNum == 1) {
+                    camNum = 2;
+                } else if (camNum == 2) {
+                    camNum = 3;
+                } else if (camNum == 3) {
+                    camNum = 4;
+                } else if (camNum == 4) {
+                    camNum = 1;
+                }
+            }
+            lastCState = glfwGetKey(window, GLFW_KEY_C);
+            
+            // Free camera, default
+            if (selection == 0) {
+                
+                cameraPosition = cameraPositionWalking;
+                
+                bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                               glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+                float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
+                
+                glfwGetCursorPos(window, &mousePosX, &mousePosY);
+                
+                dx = mousePosX - lastMousePosX;
+                dy = mousePosY - lastMousePosY;
+                
+                lastMousePosX = mousePosX;
+                lastMousePosY = mousePosY;
+                
+                // Convert to spherical coordinates
+                cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
+                cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+                
+                // Clamp vertical angle to [-85, 85] degrees
+                cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
+                if (cameraHorizontalAngle > 360) {
+                    cameraHorizontalAngle -= 360;
+                } else if (cameraHorizontalAngle < -360) {
+                    cameraHorizontalAngle += 360;
+                }
+                
+                theta = radians(cameraHorizontalAngle);
+                phi = radians(cameraVerticalAngle);
+                
+                cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
+                vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
+                
+                glm::normalize(cameraSideVector);
+                
+                if (camNum == 1) { cameraPosition = vec3(0.0f + carMove.x, 3.0f, 0.0f + carMove.z); }
+                else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
+                else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
+                else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
+                
+                
+                if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
+                {
+                    cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
+                    
+                    carMove -= cameraSideVector * currentCameraSpeed * dt;
+                }
+                
+                if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
+                {
+                    cameraPosition += cameraSideVector * currentCameraSpeed * dt;
+                    
+                    carMove += cameraSideVector * currentCameraSpeed * dt;
+                }
+                
+                if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
+                {
+                    vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
+                    cameraPosition -= moveDirection * currentCameraSpeed * dt;
+                    
+                    carMove -= moveDirection * currentCameraSpeed * dt;
+                }
+                
+                if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
+                {
+                    vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
+                    cameraPosition += moveDirection * currentCameraSpeed * dt;
+                    
+                    carMove += moveDirection * currentCameraSpeed * dt;
+                    
+                    cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
+                }
+                
+                // walking boundaries
+                if (cameraPosition.x > 2.0f)
+                    cameraPosition.x = 2.0f;
+                if (cameraPosition.x < -2.0f)
+                    cameraPosition.x = -2.0f;
+                if (carMove.x > 2.0f)
+                    carMove.x = 2.0f;
+                if (carMove.x < -2.0f)
+                    carMove.x = -2.0f;
+                
+                
+                viewMatrix = mat4(1.0);
+                
+                if (cameraFirstPerson) {
+                    viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
+                } else {
+                    float radius = 5.0f;
+                    position = cameraPosition - radius * cameraLookAt;
+                    viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
+                }
+                
+                // Keep track of walking position for when camera is changed to birds eye
+                cameraPositionWalking = cameraPosition;
+            }
+            // Birds eye camera
+            if (selection == 1) {
+                
+                cameraPosition = vec3(0.6f, 10.0f, 10.0f);
+                
+                bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                               glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+                float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
+                
+                glfwGetCursorPos(window, &mousePosX, &mousePosY);
+                
+                dx = mousePosX - lastMousePosX;
+                dy = mousePosY - lastMousePosY;
+                
+                lastMousePosX = mousePosX;
+                lastMousePosY = mousePosY;
+                
+                // Convert to spherical coordinates
+                cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
+                cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+                
+                // Clamp vertical angle to [-85, 85] degrees
+                cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
+                if (cameraHorizontalAngle > 360) {
+                    cameraHorizontalAngle -= 360;
+                } else if (cameraHorizontalAngle < -360) {
+                    cameraHorizontalAngle += 360;
+                }
+                
+                theta = radians(cameraHorizontalAngle);
+                phi = radians(cameraVerticalAngle);
+                
+                cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
+                vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
+                
+                glm::normalize(cameraSideVector);
+                
+                viewMatrix = mat4(1.0);
+                
+                if (cameraFirstPerson) {
+                    viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
+                } else {
+                    float radius = 5.0f;
+                    position = cameraPosition - radius * cameraLookAt;
+                    viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
+                }
+            }
         }
-        // Birds eye camera
-        if (selection == 1) {
-            
-            cameraPosition = vec3(0.6f, 10.0f, 10.0f);
-            
-            bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                           glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-            float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
-            
-            glfwGetCursorPos(window, &mousePosX, &mousePosY);
-            
-            dx = mousePosX - lastMousePosX;
-            dy = mousePosY - lastMousePosY;
-            
-            lastMousePosX = mousePosX;
-            lastMousePosY = mousePosY;
-            
-            // Convert to spherical coordinates
-            cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-            cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
-            
-            // Clamp vertical angle to [-85, 85] degrees
-            cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
-            if (cameraHorizontalAngle > 360) {
-                cameraHorizontalAngle -= 360;
-            } else if (cameraHorizontalAngle < -360) {
-                cameraHorizontalAngle += 360;
-            }
-            
-            theta = radians(cameraHorizontalAngle);
-            phi = radians(cameraVerticalAngle);
-            
-            cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-            vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
-            
-            glm::normalize(cameraSideVector);
-            
-            viewMatrix = mat4(1.0);
-            
-            if (cameraFirstPerson) {
-                viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-            } else {
-                float radius = 5.0f;
-                position = cameraPosition - radius * cameraLookAt;
-                viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
-            }
-        }
-}
-
+        
     }
     
     
@@ -1378,8 +1480,10 @@ GLuint createSphereObject() {
 
 int lastChunkID = -100;
 
-void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID, GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID, GLuint carTextureID, GLuint tireTextureID, vec3 carMove) {
-
+void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID,
+                 GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID,
+                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove) {
+    
     glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
@@ -1413,26 +1517,12 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
-        for (auto tree: chunk.treeData) {
-            // Draw tree
-            // Trunk
-            glBindTexture(GL_TEXTURE_2D, barkTextureID); // no texture
-            mat4 treeWorldMatrix =
-                    translate(mat4(1.0f), vec3(tree.x, 2.5f, tree.z)) * scale(mat4(1.0f), vec3(1.0f, 5.0f, 1.0f));
-            worldMatrix = treeWorldMatrix;
-            setWorldMatrix(shader, worldMatrix);
-            SetUniformVec3(shader, "object_color", vec3(0.33f, 0.2f, 0.05f)); // Brown
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            
-            // Leaves
-            glBindTexture(GL_TEXTURE_2D, leavesTextureID);
-            treeWorldMatrix =
-                    translate(mat4(1.0f), vec3(tree.x, 5.0f, tree.z)) * scale(mat4(1.0f), vec3(4.0f, 3.0f, 4.0f));
-            worldMatrix = treeWorldMatrix;
-            setWorldMatrix(shader, worldMatrix);
-            SetUniformVec3(shader, "object_color", vec3(0.18f, 0.33f, 0.15f)); // Green
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            
+        for (auto tree: chunk.bigTreePositions) {
+            drawTree(shader, tree.z, tree.x, 0.0f, 1, barkTextureID, leavesTextureID);
+        }
+        
+        for (auto tree: chunk.smallTreePositions) {
+            drawTree(shader, tree.z, tree.x, 0.0f, 2, barkTextureID, leavesTextureID);
         }
     }
     
