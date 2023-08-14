@@ -15,9 +15,9 @@ uniform int useTexture = 0;
 uniform int useShadow = 0;
 uniform bool lightsOn;
 
-const float shading_ambient_strength    = 0.3;
-const float shading_diffuse_strength    = 0.2;
-const float shading_specular_strength   = 0.3;
+const float shading_ambient_strength    = 1.0;
+const float shading_diffuse_strength    = 1.0;
+const float shading_specular_strength   = 1.0;
 
 const float fog_shading_ambient_strength    = 0.1;
 const float fog_shading_diffuse_strength    = 0.9;
@@ -159,12 +159,12 @@ void main()
         fogLightColor = specularFog + diffuseFog + ambientFog;
     }
     else if (!lightsOn && useTexture == 1)  {
-        lightColor = ambient_color(light_color, 1.0) * attenuation;
-        fogLightColor = ambient_color(fog_light_color, 0.9) * attenuation;
+        lightColor = ambient_color(light_color, 1.0);
+        fogLightColor = ambient_color(fog_light_color, 0.9);
     }
     else if (!lightsOn && useTexture == 0) {
-        lightColor  = ambient_colorFlat(light_color, 1.0) * attenuation;
-        fogLightColor = ambient_colorFlat(fog_light_color, 0.9) * attenuation;
+        lightColor  = ambient_colorFlat(light_color, 1.0);
+        fogLightColor = ambient_colorFlat(fog_light_color, 0.9);
     }
     color = (lightColor + fogLightColor)/2 * object_color;
     result = vec4(color, 1.0f);

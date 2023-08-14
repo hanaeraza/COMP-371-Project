@@ -616,7 +616,7 @@ int main(int argc, char *argv[]) {
         
         
         // light parameters
-        vec3 lightPosition = vec3(1.0f, 20.0f, 5.0f); // the location of the light in 3D space
+        vec3 lightPosition = vec3(1.0f, 20.0f, 2000.0f); // the location of the light in 3D space
         vec3 fogLightPosition = cameraPosition; // the location of the light in 3D space
         vec3 lightFocus(0.0, -1.0, 0.0);      // the point in 3D space the light "looks" at
         //vec3 lightDirection = normalize(lightFocus - lightPosition);
