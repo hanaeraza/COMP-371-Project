@@ -6,7 +6,6 @@
 #include <map>
 #include <random>
 #include <cmath>
-#include <array>
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
 
@@ -42,33 +41,31 @@ int carLight = 0;
 struct WorldChunk;
 map<int, WorldChunk> chunksByPosition;
 
-struct TreePosition {
+// Generates positions for items to be placed on the ground of a world chunk
+struct PosGenerator {
     
-    float startPositionZ; // The lower z-boundary of the world chunk which the tree will be positioned on
+    float startPositionZ; // The lower z-boundary of the world chunk which the item will be positioned on
     float x;              // Translation factor on x-axis
     float z;              // Translation factor on y-axis
-    float treeSize;           // Scaling factor for the widest point aka the leaves (square shaped) + 1 for space in between
+    float itemSize;           // Scaling factor for the widest point of the item
     float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
     float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
     bool leftSide;
     
-    TreePosition(float startPositionZ, float treeSize, bool leftSide = false) : startPositionZ(startPositionZ),
-                                                                                treeSize(treeSize), leftSide(leftSide) {
-        treeSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
+    PosGenerator(float startPositionZ, float itemSize, bool leftSide = false) : startPositionZ(startPositionZ),
+                                                                                itemSize(itemSize), leftSide(leftSide) {
+        itemSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
         
-        // start left = -47.5   start right = 5.5
-        //   end left =  -5.5     end right = 47.5
-        float startPositionY = (treeSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
-        float endPositionY = -(treeSize / 2.0f) + (leftSide ? -roadWidth / 2.0f : gridSize / 2.0f);
+        float startPositionY = (itemSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
+        float endPositionY = -(itemSize / 2.0f) + (leftSide ? -roadWidth / 2.0f : gridSize / 2.0f);
         
         // Generate random positions within the world chunk boundaries
         random_device dev;
         default_random_engine generator(dev());
         
-        // 2.5, 97.5
         uniform_real_distribution<float> xDistribution(startPositionY, endPositionY);
-        uniform_real_distribution<float> zDistribution(startPositionZ + (treeSize / 2.0f),
-                                                       startPositionZ + gridSize - (treeSize / 2.0f));
+        uniform_real_distribution<float> zDistribution(startPositionZ + (itemSize / 2.0f),
+                                                       startPositionZ + gridSize - (itemSize / 2.0f));
         
         x = xDistribution(generator);
         z = zDistribution(generator);
@@ -77,9 +74,12 @@ struct TreePosition {
 };
 
 struct WorldChunk {
+    enum itemType {SMALL_TREE, BIG_TREE, BUSH, ROCK};
     
-    vector<TreePosition> bigTreePositions;
-    vector<TreePosition> smallTreePositions;
+    vector<PosGenerator> bigTreePositions;
+    vector<PosGenerator> smallTreePositions;
+    vector<PosGenerator> rockPositions;
+    vector<PosGenerator> bushPositions;
     
     // num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
     bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
@@ -90,49 +90,69 @@ struct WorldChunk {
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
-        generateTrees(100);
+        generateItems(60);
     };
     
-    bool insertTree(TreePosition treePos, bool bigTree) {
-        vector<TreePosition> &treePositions = bigTree ? bigTreePositions : smallTreePositions;
-        bool (&occupiedGrids)[48][101] = treePos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
+    bool insertItem(PosGenerator itemPos, itemType item) {
+        vector<PosGenerator> *positions;
         
-        // Convert tree position to range [0, 47] and [0, 100]
-        int x = static_cast<int>(treePos.x + 50 - (treePos.treeSize / 2)) + (treePos.leftSide ? 0 : -53);
-        int z = static_cast<int>(treePos.z) - (100 * chunkPositionID + 50) - 2;
+        switch (item) {
+            case BUSH:
+                positions = &bushPositions;
+                break;
+            case ROCK:
+                positions = &rockPositions;
+            case BIG_TREE:
+                positions = &bigTreePositions;
+                break;
+            case SMALL_TREE:
+                positions = &smallTreePositions;
+                break;
+            default:break;
+        }
+        
+        bool (&occupiedGrids)[48][101] = itemPos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
+        
+        // Convert item position to range [0, 47] and [0, 100]
+        int x = static_cast<int>(itemPos.x + 50 - (itemPos.itemSize / 2)) + (itemPos.leftSide ? 0 : -53);
+        int z = static_cast<int>(itemPos.z) - (100 * chunkPositionID + 50) - 2;
         
         // Check if the generated tree positions are already occupied
-        for (int i = x; i < treePos.treeSize + x; i++) {
-            for (int j = z; j < treePos.treeSize + z; j++) {
+        for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
+            for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
                 if (occupiedGrids[i][j]) {
                     return false;
                 }
             }
         }
         
-        // Mark the new tree positions as occupied
-        for (int i = x; i < treePos.treeSize + x; i++) {
-            for (int j = z; j < treePos.treeSize + z; j++) {
+        // Mark the new item's positions as occupied
+        for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
+            for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
                 occupiedGrids[i][j] = true;
             }
         }
         
-        treePositions.push_back(treePos);
+        positions->push_back(itemPos);
         
         return true;
     }
     
-    void generateTrees(int numOfTrees) {
-        while (numOfTrees != 0) {
+    void generateItems(int numOfItems) {
+        while (numOfItems != 0) {
             // Big trees on right & left sides
-            insertTree(TreePosition(chunkPositionZ, 12.0f, false), true);
-            insertTree(TreePosition(chunkPositionZ, 12.0f, true), true);
+            insertItem(PosGenerator(chunkPositionZ, 12.0f, false), BIG_TREE);
+            insertItem(PosGenerator(chunkPositionZ, 12.0f, true), BIG_TREE);
             
             // Small trees on right & left sides
-            insertTree(TreePosition(chunkPositionZ, 5.0f, false), false);
-            insertTree(TreePosition(chunkPositionZ, 5.0f, true), false);
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), SMALL_TREE);
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), SMALL_TREE);
+
+            // Bushes on right & left sides
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), BUSH);
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), BUSH);
             
-            numOfTrees -= 4;
+            numOfItems -= 6;
         }
     }
     
@@ -295,11 +315,26 @@ void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &_worldMatrix[0][0]);
 }
 
+//Function to draw bushes
+void drawBush(GLuint shader, float z, float x, float initial, int draw, GLuint text) {
+    if (draw == 1) {
+        mat4 bushMatrix =
+                translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+        glBindTexture(GL_TEXTURE_2D, text);
+        SetUniformMat4(shader, "model_matrix", bushMatrix);
+        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.5f)); // Green
+        glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    }
+    
+}
+
+//Draws the tree
 void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint woodText, GLuint leafText) {
     
     if (tree == 1) {
         mat4 scaleDown = scale(mat4(1.0f), vec3(0.75f));
         mat4 translateXZ = translate(mat4(1.0f), vec3(x, 0.0f, z));
+        
         //Trunk
         glBindTexture(GL_TEXTURE_2D, woodText);
         
@@ -1524,6 +1559,13 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         for (auto tree: chunk.smallTreePositions) {
             drawTree(shader, tree.z, tree.x, 0.0f, 2, barkTextureID, leavesTextureID);
         }
+        
+        glBindVertexArray(sphereVAO);
+        for (auto bush: chunk.bushPositions) {
+            drawBush(shader, bush.z, bush.x, 0.0f, 1, leavesTextureID);
+        }
+        
+        glBindVertexArray(texturedCubeVAO);
     }
     
     drawCar(shader, sphereVAO, carMove, carTextureID, tireTextureID);
