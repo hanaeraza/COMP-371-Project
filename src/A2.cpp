@@ -1118,6 +1118,8 @@ int main(int argc, char *argv[]) {
                     cameraPosition -= moveDirection * currentCameraSpeed * dt;
                     
                     carMove -= moveDirection * currentCameraSpeed * dt;
+                    
+                    rotX -= 5.0f; // Car wheels rotation
                 }
                 
                 if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
@@ -1126,6 +1128,8 @@ int main(int argc, char *argv[]) {
                     cameraPosition += moveDirection * currentCameraSpeed * dt;
                     
                     carMove += moveDirection * currentCameraSpeed * dt;
+                    
+                    rotX += 5.0f; // Car wheels rotation
                     
                     cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
                 }
