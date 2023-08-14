@@ -27,6 +27,7 @@ uniform float light_cutoff_outer;
 uniform float light_cutoff_inner;
 uniform float light_near_plane;
 uniform float light_far_plane;
+uniform float intensity;
 
 uniform vec3 view_position;
 
@@ -110,7 +111,7 @@ void main()
 
     float scalar = shadow_scalar();
     //float scalar = shadow_scalar() * spotlight_scalar();
-
+    
     if (useShadow == 1) {
         scalar = 1.0;
         //scalar = spotlight_scalar();
@@ -166,9 +167,7 @@ void main()
         lightColor  = ambient_colorFlat(light_color, 1.0);
         fogLightColor = ambient_colorFlat(fog_light_color, 0.9);
     }
-    color = (lightColor + fogLightColor)/2 * object_color;
+
+    color = (((intensity * lightColor) + fogLightColor)/2) * object_color;
     result = vec4(color, 1.0f);
-
-
 }
-

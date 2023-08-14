@@ -626,8 +626,6 @@ int main(int argc, char *argv[]) {
     GLuint shadowMapLocation = glGetUniformLocation(shaderScene, "shadow_map");
     glUniform1i(shadowMapLocation, 1);
     
-    
-    
     // Camera parameters for view transform
     // The perfomance slows when cameraPos holds negative values, hence why it's fairly big
     vec3 cameraPosition(0.6f, 10.0f, 2000.0f);
@@ -645,6 +643,7 @@ int main(int argc, char *argv[]) {
     bool cameraFirstPerson = true;
     
     int selection = 0;
+    int intensity = 0.2;
     
     
     // Set projection matrix for shader, this won't change
@@ -747,7 +746,65 @@ int main(int argc, char *argv[]) {
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
         SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
+
+        // Night and Day Timer
+        SetUniform1fValue(shaderScene, "intensity", intensity); // Set initial intensity
         
+        if (glfwGetTime() <= 5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.2);
+        }
+        else if (glfwGetTime() <= 5.5 || glfwGetTime() >= 21.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.25);
+        }
+        else if (glfwGetTime() <= 6 || glfwGetTime() >= 21) {
+            SetUniform1fValue(shaderScene, "intensity", 0.3);
+        }
+        else if (glfwGetTime() <= 6.5 || glfwGetTime() >= 20.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.35);
+        }
+        else if (glfwGetTime() <= 7 || glfwGetTime() >= 20) {
+            SetUniform1fValue(shaderScene, "intensity", 0.4);
+        }
+        else if (glfwGetTime() <= 7.5 || glfwGetTime() >= 19.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.45);
+        }
+        else if (glfwGetTime() <= 8 || glfwGetTime() >= 19) {
+            SetUniform1fValue(shaderScene, "intensity", 0.5);
+        }
+        else if (glfwGetTime() <= 8.5 || glfwGetTime() >= 18.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.55);
+        }
+        else if (glfwGetTime() <= 9 || glfwGetTime() >= 18) {
+            SetUniform1fValue(shaderScene, "intensity", 0.6);
+        }
+        else if (glfwGetTime() <= 9.5 || glfwGetTime() >= 17.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.65);
+        }
+        else if (glfwGetTime() <= 10 || glfwGetTime() >= 17) {
+            SetUniform1fValue(shaderScene, "intensity", 0.7);
+        }
+        else if (glfwGetTime() <= 10.5 || glfwGetTime() >= 16.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.75);
+        }
+        else if (glfwGetTime() <= 11 || glfwGetTime() >= 16) {
+            SetUniform1fValue(shaderScene, "intensity", 0.8);
+        }
+        else if (glfwGetTime() <= 11.5 || glfwGetTime() >= 15.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.85);
+        }
+        else if (glfwGetTime() <= 12 || glfwGetTime() >= 15) {
+            SetUniform1fValue(shaderScene, "intensity", 0.9);
+        }
+        else if (glfwGetTime() <= 12.5 || glfwGetTime() >= 14.5) {
+            SetUniform1fValue(shaderScene, "intensity", 0.95);
+        }
+        else {
+            SetUniform1fValue(shaderScene, "intensity", 1.0);
+        }
+
+        if (glfwGetTime() >= 25) {
+            glfwSetTime(0.0);
+        }
         
         // Set model matrix and send to both shaders
         mat4 modelMatrix = mat4(1.0f);
@@ -870,7 +927,6 @@ int main(int argc, char *argv[]) {
                 }
             }
             previousXstate = glfwGetKey(window, GLFW_KEY_X);
-            
             
             // Toggle shadow
             if (previousZstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
