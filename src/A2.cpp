@@ -125,8 +125,13 @@ struct WorldChunk {
     }
     
     [[nodiscard]] mat4 getGroundMatrix() const {
-        return translate(mat4(1.0f), vec3(0.0f, -0.09f, chunkPositionZ)) *
+        return translate(mat4(1.0f), vec3(0.0f, -0.1f, chunkPositionZ)) *
                scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
+    }
+    
+    [[nodiscard]] mat4 getRoadMatrix() const {
+        return translate(mat4(1.0f), vec3(0.0f, 0.3f, chunkPositionZ)) *
+               scale(mat4(1.0f), vec3(10.0f, 0.3f, 100.0f));
     }
 };
 
@@ -1395,17 +1400,15 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         WorldChunk chunk = chunksByPosition.at(i);
         
         // Floor
-        mat4 courtWorldMatrix = chunk.getGroundMatrix();
         glBindTexture(GL_TEXTURE_2D, grassTextureID);
-        worldMatrix = courtWorldMatrix;
+        worldMatrix = chunk.getGroundMatrix();
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         // Road
-        courtWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, static_cast<float>((100 * currentChunkID) + 50))) * scale(mat4(1.0f), vec3(10.0f, 0.3f, 300.0f));
         glBindTexture(GL_TEXTURE_2D, stoneTextureID);
-        worldMatrix = courtWorldMatrix;
+        worldMatrix = chunk.getRoadMatrix();
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
         glDrawArrays(GL_TRIANGLES, 0, 36);
