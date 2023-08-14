@@ -15,6 +15,7 @@ uniform int useTexture = 0;
 uniform int useShadow = 0;
 uniform bool lightsOn;
 
+
 const float shading_ambient_strength    = 1.0;
 const float shading_diffuse_strength    = 1.0;
 const float shading_specular_strength   = 1.0;
@@ -27,6 +28,7 @@ uniform float light_cutoff_outer;
 uniform float light_cutoff_inner;
 uniform float light_near_plane;
 uniform float light_far_plane;
+uniform float intensity;
 
 uniform vec3 view_position;
 
@@ -166,9 +168,6 @@ void main()
         lightColor  = ambient_colorFlat(light_color, 1.0);
         fogLightColor = ambient_colorFlat(fog_light_color, 0.9);
     }
-    color = (lightColor + fogLightColor)/2 * object_color;
+    color = (((intensity * lightColor) + fogLightColor)/2) * object_color;
     result = vec4(color, 1.0f);
-
-
 }
-
