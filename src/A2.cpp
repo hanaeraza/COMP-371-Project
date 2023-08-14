@@ -77,8 +77,8 @@ struct WorldChunk {
     vector<TreePosition> treeData;
     
     // num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
-    array<std::array<bool, 48>, 101> occupiedGridsLeft = {}; // Fill with false for all rows & cols
-    array<std::array<bool, 48>, 101> occupiedGridsRight = {}; // Fill with false for all rows & cols
+    bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
+    bool occupiedGridsRight[48][101] = {};// Fill with false for all rows & cols
     float chunkPositionZ;
     int chunkPositionID;
     
@@ -89,7 +89,7 @@ struct WorldChunk {
     };
     
     bool insertTree(TreePosition treePos) {
-        array<std::array<bool, 48>, 101> &occupiedGrids = treePos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
+        bool (&occupiedGrids)[48][101] = treePos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
         
         // Convert tree position to range [0, 47] and [0, 100]
         int x = static_cast<int>(treePos.x + 50 - (treePos.size / 2)) + (treePos.leftSide ? 0 : - 53);
