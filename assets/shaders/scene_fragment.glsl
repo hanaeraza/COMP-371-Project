@@ -44,13 +44,11 @@ in vec4 gl_FragCoord;
 out vec4 result;
 
 vec3 ambient_color(vec3 light_color_arg, float strength) {
-    vec4 textureColor = texture(textureSampler, vertexUV);
-    return strength * light_color_arg * textureColor.rgb;
+    return strength * light_color_arg;
 }
 
 vec3 diffuse_color(vec3 light_color_arg, vec3 light_position_arg, float strength, vec3 light_dir) {
-    vec4 textureColor = texture(textureSampler, vertexUV);
-    return strength * light_color_arg * max(dot(normalize(fragment_normal), light_dir), 0.0f) * textureColor.rgb;
+    return strength * light_color_arg * max(dot(normalize(fragment_normal), light_dir), 0.0f);
 }
 
 vec3 specular_color(vec3 light_color_arg, vec3 light_position_arg, float strength, vec3 light_dir) {
@@ -58,16 +56,6 @@ vec3 specular_color(vec3 light_color_arg, vec3 light_position_arg, float strengt
     vec3 reflect_light_direction = reflect(-light_dir, normalize(fragment_normal));
     return strength * light_color_arg * pow(max(dot(reflect_light_direction, view_direction), 0.0f), 32);
 }
-
-
-vec3 ambient_colorFlat(vec3 light_color_arg, float strength) {
-    return strength * light_color_arg;
-}
-
-vec3 diffuse_colorFlat(vec3 light_color_arg, vec3 light_position_arg, float strength, vec3 light_dir) {
-    return strength * light_color_arg * max(dot(normalize(fragment_normal), light_dir), 0.0f);
-}
-
 
 float shadow_scalar() {
     // this function returns 1.0 when the surface receives light, and 0.0 when it is in a shadow
@@ -130,44 +118,27 @@ void main()
     float attenuation = 1.0 / (1.0f + 0.027f * distance + 0.0028f * (distance * distance));
     //float attenuation = 1.0;
 
+    ambient = ambient_color(light_color, shading_ambient_strength) * attenuation;
+    diffuse = scalar * diffuse_color(light_color, light_position, shading_diffuse_strength, normalize(-light_direction)) * attenuation;
+    specular = scalar * specular_color(light_color, light_position, shading_specular_strength, normalize(-light_direction)) * attenuation;
+    lightColor = specular + diffuse + ambient;
 
-    // default: no texture
+    // fog light
+    ambientFog = ambient_color(fog_light_color, fog_shading_ambient_strength) * attenuation;
+    diffuseFog = scalar * diffuse_color(fog_light_color, fog_light_position, fog_shading_diffuse_strength, normalize(fog_light_position - fragment_position)) * attenuation;
+    specularFog = scalar * specular_color(fog_light_color, fog_light_position, fog_shading_specular_strength, normalize(fog_light_position - fragment_position)) * attenuation;
+    fogLightColor = specularFog + diffuseFog + ambientFog;
 
-    if (lightsOn && useTexture == 0) {
-        // directional light
-        ambient = ambient_colorFlat(light_color, shading_ambient_strength) * attenuation;
-        diffuse = scalar * diffuse_colorFlat(light_color, light_position, shading_diffuse_strength, normalize(-light_direction)) * attenuation;
-        specular = scalar * specular_color(light_color, light_position, shading_specular_strength, normalize(-light_direction)) * attenuation;
-        lightColor = specular + diffuse + ambient;
-
-        // fog light
-        ambientFog = ambient_colorFlat(fog_light_color, fog_shading_ambient_strength) * attenuation;
-        diffuseFog = scalar * diffuse_colorFlat(fog_light_color, fog_light_position, fog_shading_diffuse_strength, normalize(fog_light_position - fragment_position)) * attenuation;
-        specularFog = scalar * specular_color(fog_light_color, fog_light_position, fog_shading_specular_strength, normalize(fog_light_position - fragment_position)) * attenuation;
-        fogLightColor = specularFog + diffuseFog + ambientFog;
-    }
-    // press X: textured
-    else if (lightsOn && useTexture == 1){
-        // directional light
-        ambient = ambient_color(light_color, shading_ambient_strength) * attenuation;
-        diffuse = scalar * diffuse_color(light_color, light_position, shading_diffuse_strength, normalize(-light_direction)) * attenuation;
-        specular = scalar * specular_color(light_color, light_position, shading_specular_strength, normalize(-light_direction)) * attenuation;
-        lightColor = specular + diffuse + ambient;
-
-        // fog light
-        ambientFog = ambient_color(fog_light_color, fog_shading_ambient_strength) * attenuation;
-        diffuseFog = scalar * diffuse_color(fog_light_color, fog_light_position, fog_shading_diffuse_strength, normalize(fog_light_position - fragment_position)) * attenuation;
-        specularFog = scalar * specular_color(fog_light_color, fog_light_position, fog_shading_specular_strength, normalize(fog_light_position - fragment_position)) * attenuation;
-        fogLightColor = specularFog + diffuseFog + ambientFog;
-    }
-    else if (!lightsOn && useTexture == 1)  {
+    if (!lightsOn) {
         lightColor = ambient_color(light_color, 1.0);
         fogLightColor = ambient_color(fog_light_color, 0.9);
     }
-    else if (!lightsOn && useTexture == 0) {
-        lightColor  = ambient_colorFlat(light_color, 1.0);
-        fogLightColor = ambient_colorFlat(fog_light_color, 0.9);
-    }
+
     color = (((intensity * lightColor) + fogLightColor)/2) * object_color;
-    result = vec4(color, 1.0f);
+
+    if (useTexture == 1) {
+        result = vec4(color, 1.0f);
+    } else {
+        result = texture(textureSampler, vertexUV) * vec4(color, 1.0f);
+    }
 }
