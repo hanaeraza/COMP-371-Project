@@ -179,8 +179,8 @@ GLuint loadCubemap(vector<std::string> faces);
 
 GLuint createSkyboxObject();
 
-void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID,
-                 GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID,
+void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
+                 GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
                  GLuint carTextureID, GLuint tireTextureID, vec3 carMove);
 
 // Translation keyboard input variables
@@ -580,13 +580,13 @@ int main(int argc, char *argv[]) {
                                      shaderPathPrefix + "skybox.frag");
     
     // Load Textures
-    GLuint stoneTextureID = loadTexture((pathPrefix + "assets/textures/cobblestone.jpg").c_str());
-    GLuint grassTextureID = loadTexture((pathPrefix + "assets/textures/grass.jpg").c_str());
-    GLuint leavesTextureID = loadTexture((pathPrefix + "assets/textures/leaves.jpg").c_str());
-    GLuint barkTextureID = loadTexture((pathPrefix + "assets/textures/bark.jpg").c_str());
-    GLuint noTextureID = loadTexture((pathPrefix + "assets/textures/white.jpg").c_str());
-    GLuint carTextureID = loadTexture((pathPrefix + "assets/textures/car.jpg").c_str());
-    GLuint tireTextureID = loadTexture((pathPrefix + "assets/textures/tire.jpg").c_str());
+    GLuint bushTextureID = loadTexture((pathPrefix + "Assets/Textures/bush.jpg").c_str());
+    GLuint leavesTextureID = loadTexture((pathPrefix + "Assets/Textures/leaves.png").c_str());
+    GLuint woodTextureID = loadTexture((pathPrefix + "Assets/Textures/wood.jpg").c_str());
+    GLuint roadTextureID = loadTexture((pathPrefix + "Assets/Textures/road.jpg").c_str());
+    GLuint dirtTextureID = loadTexture((pathPrefix + "Assets/Textures/dirt.png").c_str());
+    GLuint carTextureID = loadTexture((pathPrefix + "Assets/Textures/car.jpg").c_str());
+    GLuint tireTextureID = loadTexture((pathPrefix + "Assets/Textures/tire.jpg").c_str());
     
     vector<std::string> skyFaces{
             pathPrefix + "assets/textures/skybox/px.jpg",  // right
@@ -882,8 +882,8 @@ int main(int argc, char *argv[]) {
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderShadow, vao, sphereVAO, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID,
-                        leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
+            renderScene(shaderShadow, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
+                        leavesTextureID, carTextureID, tireTextureID, carMove);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -914,15 +914,15 @@ int main(int argc, char *argv[]) {
             
             // Draw textured geometry
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, stoneTextureID);
+            glBindTexture(GL_TEXTURE_2D, roadTextureID);
             // Bind geometry
             
             GLuint worldMatrixLocation = glGetUniformLocation(shaderScene, "model_matrix");
             // Bind geometry
             glBindVertexArray(vao);
             
-            renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, stoneTextureID, grassTextureID, barkTextureID,
-                        leavesTextureID, noTextureID, carTextureID, tireTextureID, carMove);
+            renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
+                        leavesTextureID, carTextureID, tireTextureID, carMove);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -1575,11 +1575,10 @@ GLuint createSphereObject() {
 
 int lastChunkID = -100;
 
-void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint stoneTextureID,
-                 GLuint grassTextureID, GLuint barkTextureID, GLuint leavesTextureID, GLuint noTextureID,
+void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
+                 GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
                  GLuint carTextureID, GLuint tireTextureID, vec3 carMove) {
     
-    glBindTexture(GL_TEXTURE_2D, noTextureID); // no texture
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
     
@@ -1599,25 +1598,25 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         WorldChunk chunk = chunksByPosition.at(i);
         
         // Floor
-        glBindTexture(GL_TEXTURE_2D, grassTextureID);
+        glBindTexture(GL_TEXTURE_2D, dirtTextureID);
         worldMatrix = chunk.getGroundMatrix();
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.38f, 0.63f, 0.33f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         // Road
-        glBindTexture(GL_TEXTURE_2D, stoneTextureID);
+        glBindTexture(GL_TEXTURE_2D, roadTextureID);
         worldMatrix = chunk.getRoadMatrix();
         setWorldMatrix(shader, worldMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         for (auto tree: chunk.bigTreePositions) {
-            drawTree(shader, tree.z, tree.x, 0.0f, 1, barkTextureID, leavesTextureID);
+            drawTree(shader, tree.z, tree.x, 0.0f, 1, woodTextureID, leavesTextureID);
         }
         
         for (auto tree: chunk.smallTreePositions) {
-            drawTree(shader, tree.z, tree.x, 0.0f, 2, barkTextureID, leavesTextureID);
+            drawTree(shader, tree.z, tree.x, 0.0f, 2, woodTextureID, leavesTextureID);
         }
         
         glBindVertexArray(sphereVAO);
