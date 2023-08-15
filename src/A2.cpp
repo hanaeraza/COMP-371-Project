@@ -586,7 +586,7 @@ int main(int argc, char *argv[]) {
     GLuint bushTextureID = loadTexture((pathPrefix + "Assets/Textures/bush.jpg").c_str());
     GLuint leavesTextureID = loadTexture((pathPrefix + "Assets/Textures/leaves.png").c_str());
     GLuint woodTextureID = loadTexture((pathPrefix + "Assets/Textures/wood.jpg").c_str());
-    GLuint roadTextureID = loadTexture((pathPrefix + "Assets/Textures/road.jpg").c_str());
+    GLuint roadTextureID = loadTexture((pathPrefix + "Assets/Textures/dirtroad.jpg").c_str());
     GLuint dirtTextureID = loadTexture((pathPrefix + "Assets/Textures/dirt.png").c_str());
     GLuint carTextureID = loadTexture((pathPrefix + "Assets/Textures/car.jpg").c_str());
     GLuint tireTextureID = loadTexture((pathPrefix + "Assets/Textures/tire.jpg").c_str());
