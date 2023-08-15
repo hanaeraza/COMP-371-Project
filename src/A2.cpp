@@ -1607,7 +1607,7 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
     // Only 5 chunks in total are rendered each frame (number of chunks needs to be odd for proper positioning)
     for (int i = currentChunkID - 2; i <= currentChunkID + 2; i++) {
         // All previously rendered chunks are saved to be able to go back to same scene
-        if (!chunksByPosition.contains(i)) {
+        if (!chunksByPosition.count(i)) {
             cout << "POPULATED ID: " << i << "\n";
             chunksByPosition.insert(make_pair(i, WorldChunk(i)));
         }
