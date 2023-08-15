@@ -19,136 +19,7 @@ int camNum = 3;
 bool carLight = false;
 
 struct WorldChunk;
-map<int, WorldChunk> chunksByPosition;
-
-// Generates positions for items to be placed on the ground of a world chunk
-struct PosGenerator {
-    
-    float startPositionZ; // The lower z-boundary of the world chunk which the item will be positioned on
-    float x;              // Translation factor on x-axis
-    float z;              // Translation factor on y-axis
-    float itemSize;           // Scaling factor for the widest point of the item
-    float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
-    float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
-    bool leftSide;
-    
-    PosGenerator(float startPositionZ, float itemSize, bool leftSide = false) : startPositionZ(startPositionZ),
-                                                                                itemSize(itemSize), leftSide(leftSide) {
-        itemSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
-        
-        float startPositionY = (itemSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
-        float endPositionY = -(itemSize / 2.0f) + (leftSide ? -roadWidth / 2.0f : gridSize / 2.0f);
-        
-        // Generate random positions within the world chunk boundaries
-        random_device dev;
-        default_random_engine generator(dev());
-        
-        uniform_real_distribution<float> xDistribution(startPositionY, endPositionY);
-        uniform_real_distribution<float> zDistribution(startPositionZ + (itemSize / 2.0f),
-                                                       startPositionZ + gridSize - (itemSize / 2.0f));
-        
-        x = xDistribution(generator);
-        z = zDistribution(generator);
-    };
-    
-};
-
-struct WorldChunk {
-    enum itemType {
-        SMALL_TREE, BIG_TREE, BUSH, ROCK
-    };
-    
-    vector<PosGenerator> bigTreePositions;
-    vector<PosGenerator> smallTreePositions;
-    vector<PosGenerator> rockPositions;
-    vector<PosGenerator> bushPositions;
-    
-    // num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
-    bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
-    bool occupiedGridsRight[48][101] = {};// Fill with false for all rows & cols
-    float chunkPositionZ;
-    int chunkPositionID;
-    
-    explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
-        chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
-        
-        generateItems(60);
-    };
-    
-    bool insertItem(PosGenerator itemPos, itemType item) {
-        vector<PosGenerator> *positions;
-        
-        switch (item) {
-            case BUSH:
-                positions = &bushPositions;
-                break;
-            case ROCK:
-                positions = &rockPositions;
-            case BIG_TREE:
-                positions = &bigTreePositions;
-                break;
-            case SMALL_TREE:
-                positions = &smallTreePositions;
-                break;
-            default:
-                break;
-        }
-        
-        bool (&occupiedGrids)[48][101] = itemPos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
-        
-        // Convert item position to range [0, 47] and [0, 100]
-        int x = static_cast<int>(itemPos.x + 50 - (itemPos.itemSize / 2)) + (itemPos.leftSide ? 0 : -53);
-        int z = static_cast<int>(itemPos.z) - (100 * chunkPositionID + 50) - 2;
-        
-        // Check if the generated tree positions are already occupied
-        for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
-            for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
-                if (occupiedGrids[i][j]) {
-                    return false;
-                }
-            }
-        }
-        
-        // Mark the new item's positions as occupied
-        for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
-            for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
-                occupiedGrids[i][j] = true;
-            }
-        }
-        
-        positions->push_back(itemPos);
-        
-        return true;
-    }
-    
-    void generateItems(int numOfItems) {
-        while (numOfItems != 0) {
-            // Big trees on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 12.0f, false), BIG_TREE);
-            insertItem(PosGenerator(chunkPositionZ, 12.0f, true), BIG_TREE);
-            
-            // Small trees on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), SMALL_TREE);
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), SMALL_TREE);
-            
-            // Bushes on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), BUSH);
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), BUSH);
-            
-            numOfItems -= 6;
-        }
-    }
-    
-    [[nodiscard]] mat4 getGroundMatrix() const {
-        return translate(mat4(1.0f), vec3(0.0f, -0.3f, chunkPositionZ)) *
-               scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
-    }
-    
-    [[nodiscard]] mat4 getRoadMatrix() const {
-        return translate(mat4(1.0f), vec3(0.0f, -0.1f, chunkPositionZ)) *
-               scale(mat4(1.0f), vec3(10.0f, 0.3f, 100.0f));
-    }
-};
+map<int, WorldChunk> chunksByPosition; // Will hold all previous chunk position information for history
 
 unsigned int indexCount;
 
@@ -1134,8 +1005,6 @@ int main(int argc, char *argv[]) {
                     carMove += moveDirection * currentCameraSpeed;
                     
                     rotX += 5.0f; // Car wheels rotation
-                    
-                    cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
                 }
                 
                 // walking boundaries
@@ -1428,7 +1297,7 @@ GLuint createTexturedCubeVAO() {
     return vertexArrayObject;
 }
 
-
+// Creates VAO/VBO with position, uv (texture), normal (light) and color indices for a spherical object
 GLuint createSphereObject() {
     // A vertex is a point on a polygon, it contains positions and other data (eg: colors)
     unsigned int sphereVAO;
@@ -1520,6 +1389,138 @@ GLuint createSphereObject() {
     
     return sphereVAO;
 }
+
+
+// Generates positions for items to be placed on the ground of a world chunk
+struct PosGenerator {
+    
+    float startPositionZ; // The lower z-boundary of the world chunk which the item will be positioned on
+    float x;              // Translation factor on x-axis
+    float z;              // Translation factor on y-axis
+    float itemSize;           // Scaling factor for the widest point of the item
+    float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
+    float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
+    bool leftSide;
+    
+    PosGenerator(float startPositionZ, float itemSize, bool leftSide = false) : startPositionZ(startPositionZ),
+                                                                                itemSize(itemSize), leftSide(leftSide) {
+        itemSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
+        
+        float startPositionY = (itemSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
+        float endPositionY = -(itemSize / 2.0f) + (leftSide ? -roadWidth / 2.0f : gridSize / 2.0f);
+        
+        // Generate random positions within the world chunk boundaries
+        random_device dev;
+        default_random_engine generator(dev());
+        
+        uniform_real_distribution<float> xDistribution(startPositionY, endPositionY);
+        uniform_real_distribution<float> zDistribution(startPositionZ + (itemSize / 2.0f),
+                                                       startPositionZ + gridSize - (itemSize / 2.0f));
+        
+        x = xDistribution(generator);
+        z = zDistribution(generator);
+    };
+    
+};
+
+// A world chunk consists of a ground tile of 100x100, the road and all items (trees, bushes, etc) that are positioned
+// stationarily on it. The position information of all items is saved to be able to revisit previously generated chunks.
+struct WorldChunk {
+    enum itemType {
+        SMALL_TREE, BIG_TREE, BUSH, ROCK
+    };
+    
+    vector<PosGenerator> bigTreePositions;
+    vector<PosGenerator> smallTreePositions;
+    vector<PosGenerator> rockPositions;
+    vector<PosGenerator> bushPositions;
+    
+    // Num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
+    bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
+    bool occupiedGridsRight[48][101] = {};// Fill with false for all rows & cols
+    float chunkPositionZ;
+    int chunkPositionID;
+    
+    explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
+        chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
+        
+        generateItems(60);
+    };
+    
+    bool insertItem(PosGenerator itemPos, itemType item) {
+        vector<PosGenerator> *positions;
+        
+        switch (item) {
+            case BUSH:
+                positions = &bushPositions;
+                break;
+            case ROCK:
+                positions = &rockPositions;
+            case BIG_TREE:
+                positions = &bigTreePositions;
+                break;
+            case SMALL_TREE:
+                positions = &smallTreePositions;
+                break;
+            default:
+                break;
+        }
+        
+        bool (&occupiedGrids)[48][101] = itemPos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
+        
+        // Convert item position to range [0, 47] and [0, 100]
+        int x = static_cast<int>(itemPos.x + 50 - (itemPos.itemSize / 2)) + (itemPos.leftSide ? 0 : -53);
+        int z = static_cast<int>(itemPos.z) - (100 * chunkPositionID + 50) - 2;
+        
+        // Check if the generated tree positions are already occupied
+        for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
+            for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
+                if (occupiedGrids[i][j]) {
+                    return false;
+                }
+            }
+        }
+        
+        // Mark the new item's positions as occupied
+        for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
+            for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
+                occupiedGrids[i][j] = true;
+            }
+        }
+        
+        positions->push_back(itemPos);
+        
+        return true;
+    }
+    
+    void generateItems(int numOfItems) {
+        while (numOfItems != 0) {
+            // Big trees on right & left sides
+            insertItem(PosGenerator(chunkPositionZ, 12.0f, false), BIG_TREE);
+            insertItem(PosGenerator(chunkPositionZ, 12.0f, true), BIG_TREE);
+            
+            // Small trees on right & left sides
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), SMALL_TREE);
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), SMALL_TREE);
+            
+            // Bushes on right & left sides
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), BUSH);
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), BUSH);
+            
+            numOfItems -= 6;
+        }
+    }
+    
+    [[nodiscard]] mat4 getGroundMatrix() const {
+        return translate(mat4(1.0f), vec3(0.0f, -0.3f, chunkPositionZ)) *
+               scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
+    }
+    
+    [[nodiscard]] mat4 getRoadMatrix() const {
+        return translate(mat4(1.0f), vec3(0.0f, -0.1f, chunkPositionZ)) *
+               scale(mat4(1.0f), vec3(10.0f, 0.3f, 100.0f));
+    }
+};
 
 int lastChunkID = -100;
 
