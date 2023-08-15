@@ -5,9 +5,6 @@ const float PI = 3.1415926535897932384626433832795;
 uniform vec3 light_color;
 uniform vec3 light_position;
 uniform vec3 light_direction;
-uniform vec3 fog_light_color;
-uniform vec3 fog_light_position;
-uniform vec3 fog_light_direction;
 
 uniform vec3 light_color2;
 uniform vec3 light_position2;
@@ -15,23 +12,18 @@ uniform vec3 light_direction2;
 
 uniform vec3 object_color;
 uniform sampler2D textureSampler;
-uniform int useTexture = 0;
-uniform int useShadow = 0;
-uniform int useCarLight;
+uniform bool useTexture = true;
+uniform bool useCarLight;
 uniform bool lightsOn;
 
 
-const float shading_ambient_strength    = 1.0;
+const float shading_ambient_strength    = 0.1;
 const float shading_diffuse_strength    = 1.0;
 const float shading_specular_strength   = 1.0;
 
 const float shading_ambient_strength2 = 0.7;
 const float shading_diffuse_strength2 = 0.6;
 const float shading_specular_strength2 = 0.3;
-
-const float fog_shading_ambient_strength    = 0.1;
-const float fog_shading_diffuse_strength    = 0.9;
-const float fog_shading_specular_strength   = 0.3;
 
 uniform float light_cutoff_outer;
 uniform float light_cutoff_inner;
@@ -59,18 +51,18 @@ in vec4 gl_FragCoord;
 
 out vec4 result;
 
-vec3 ambient_color(vec3 light_color_arg, float strength) {
-    return strength * light_color_arg;
+vec3 ambient_color(vec3 light_color_arg) {
+    return shading_ambient_strength * light_color_arg;
 }
 
-vec3 diffuse_color(vec3 light_color_arg, vec3 light_position_arg, float strength, vec3 light_dir) {
-    return strength * light_color_arg * max(dot(normalize(fragment_normal), light_dir), 0.0f);
+vec3 diffuse_color(vec3 light_color_arg, vec3 light_position_arg, vec3 light_direction_arg) {
+    return shading_diffuse_strength * light_color_arg * max(dot(normalize(fragment_normal), light_direction_arg), 0.0f);
 }
 
-vec3 specular_color(vec3 light_color_arg, vec3 light_position_arg, float strength, vec3 light_dir) {
+vec3 specular_color(vec3 light_color_arg, vec3 light_position_arg, vec3 light_direction_arg) {
     vec3 view_direction = normalize(view_position - fragment_position);
-    vec3 reflect_light_direction = reflect(-light_dir, normalize(fragment_normal));
-    return strength * light_color_arg * pow(max(dot(reflect_light_direction, view_direction), 0.0f), 32);
+    vec3 reflect_light_direction = reflect(-light_direction_arg, normalize(fragment_normal));
+    return shading_specular_strength * light_color_arg * pow(max(dot(reflect_light_direction, view_direction), 0.0f), 32);
 }
 
 float shadow_scalar() {
@@ -93,14 +85,14 @@ float shadow_scalar() {
 }
 
 float spotlight_scalar() {
-    float theta = dot(normalize(fragment_position - light_position2), light_direction2);
-    if (theta > light_cutoff_inner2) {
-        return 0.0;
-    } else if (theta > light_cutoff_outer2) {
-        return (1.0 - cos(3.14* (theta - light_cutoff_outer2) / (light_cutoff_inner2 - light_cutoff_outer2))) / 2.0;
-    }
-    else {
+    float theta = dot(normalize(fragment_position - light_position), light_direction);
+
+    if (theta > light_cutoff_inner) {
         return 1.0;
+    } else if (theta > light_cutoff_outer) {
+        return (1.0 - cos(PI * (theta - light_cutoff_outer) / (light_cutoff_inner - light_cutoff_outer))) / 2.0;
+    } else {
+        return 0.0;
     }
 }
 
@@ -110,64 +102,28 @@ void main()
     vec3 diffuse = vec3(0.0f);
     vec3 specular = vec3(0.0f);
 
-    vec3 ambientFog = vec3(0.0f);
-    vec3 diffuseFog = vec3(0.0f);
-    vec3 specularFog = vec3(0.0f);
-
     vec3 diffuse2 = vec3(0.0f);
     vec3 specular2 = vec3(0.0f);
 
-    float scalar = shadow_scalar();
-    //float scalar = shadow_scalar() * spotlight_scalar();
+    vec3 light_dir = normalize(light_position - fragment_position);
 
-    if (useShadow == 1) {
-        scalar = 1.0;
-        //scalar = spotlight_scalar();
-    }
-
-    //ambient = ambient_color(light_color);
-    //diffuse = scalar * diffuse_color(light_color, light_position);
-    //specular = scalar * specular_color(light_color, light_position);
-
-    vec3 color = vec3(0.0f);
+    float scalar = shadow_scalar() * spotlight_scalar();
+    ambient = ambient_color(light_color);
+    diffuse = scalar * diffuse_color(light_color, light_position, light_dir);
+    specular = scalar * specular_color(light_color, light_position, light_dir);
     vec3 lightColor = vec3(0.0f);
-    vec3 fogLightColor = vec3(0.0f);
 
-    float distance = length(fog_light_position - fragment_position);
-    float attenuation = 1.0 / (1.0f + 0.027f * distance + 0.0028f * (distance * distance));
-    //float attenuation = 1.0;
+    vec3 objColor = useTexture ? texture(textureSampler, vertexUV).rgb : object_color;
 
-    ambient = ambient_color(light_color, shading_ambient_strength) * attenuation;
-    diffuse = scalar * diffuse_color(light_color, light_position, shading_diffuse_strength, normalize(-light_direction)) * attenuation;
-    specular = scalar * specular_color(light_color, light_position, shading_specular_strength, normalize(-light_direction)) * attenuation;
-    lightColor = specular + diffuse + ambient;
-
-    // fog light
-    ambientFog = ambient_color(fog_light_color, fog_shading_ambient_strength) * attenuation;
-    diffuseFog = scalar * diffuse_color(fog_light_color, fog_light_position, fog_shading_diffuse_strength, normalize(fog_light_position - fragment_position)) * attenuation;
-    specularFog = scalar * specular_color(fog_light_color, fog_light_position, fog_shading_specular_strength, normalize(fog_light_position - fragment_position)) * attenuation;
-    fogLightColor = specularFog + diffuseFog + ambientFog;
-
-    if (!lightsOn) {
-        lightColor = ambient_color(light_color, 1.0);
-        fogLightColor = ambient_color(fog_light_color, 0.9);
+    vec3 color;
+    if (useCarLight){
+        diffuse2 =  spotlight_scalar()* shading_diffuse_strength2 *diffuse_color(light_color2, light_position2, light_direction);
+        specular2 =  spotlight_scalar()*shading_specular_strength2 *specular_color(light_color2, light_position2, light_direction);
+        lightColor = specular2 + diffuse2 + diffuse + specular;
     }
 
+    color = ((intensity * (ambient + ambient)) + lightColor) * objColor;
 
-    if (useCarLight==1){
-        diffuse2 =  spotlight_scalar()*diffuse_color(light_color2, light_position2, shading_diffuse_strength2, light_direction);
-        specular2 =  spotlight_scalar()*specular_color(light_color2, light_position2, shading_specular_strength2, light_direction);
-        lightColor = (specular + specular2 + diffuse + diffuse2 + ambient);
-    } else {}
-    color = intensity * lightColor  + fogLightColor * object_color;
-
-
-//    color = (((intensity * lightColor) + fogLightColor)/2) * object_color;
-
-    if (useTexture == 1) {
-        result = vec4(color, 1.0f);
-    } else {
-        result = texture(textureSampler, vertexUV) * vec4(color, 1.0f);
-    }
-
+    result = vec4(color, 1.0f);
 }
+

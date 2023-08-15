@@ -35,7 +35,7 @@ using namespace std;
 
 float rotX = 0.0f;
 int camNum = 3;
-int carLight = 0;
+bool carLight = false;
 
 
 struct WorldChunk;
@@ -687,7 +687,7 @@ int main(int argc, char *argv[]) {
     // Set projection matrix for shader, this won't change
     mat4 projectionMatrix = glm::perspective(70.0f,           // field of view in degrees
                                              WIDTH * 1.0f / HEIGHT, // aspect ratio
-                                             0.01f, 800.0f);  // near and far (near > 0)
+                                             0.01f, 1000.0f);  // near and far (near > 0)
     
     // Set initial view matrix on both shaders
     mat4 viewMatrix = lookAt(cameraPosition,                // eye
@@ -701,15 +701,14 @@ int main(int argc, char *argv[]) {
     SetUniformMat4(shaderScene, "view_matrix", viewMatrix);
     
     
-    float lightAngleOuter = 30.0;
-    float lightAngleInner = 20.0;
+    float lightAngleOuter = 45.0;
+    float lightAngleInner = 35.0;
     // Set light cutoff angles on scene shader
     SetUniform1fValue(shaderScene, "light_cutoff_inner", cos(radians(lightAngleInner)));
     SetUniform1fValue(shaderScene, "light_cutoff_outer", cos(radians(lightAngleOuter)));
     
     // Set light color on scene shader
     SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
-    SetUniformVec3(shaderScene, "fog_light_color", vec3(1.0, 1.0, 1.0));
     SetUniformVec3(shaderScene, "light_color2", vec3(1.0, 1.0, 1.0)); // Set light color on light shader
     
     // Set object color on scene shader
@@ -751,19 +750,16 @@ int main(int argc, char *argv[]) {
         
         
         // light parameters
-        vec3 lightPosition = vec3(1.0f, 20.0f, 2000.0f); // the location of the light in 3D space
-        vec3 fogLightPosition = cameraPosition; // the location of the light in 3D space
-        vec3 lightFocus(0.0, -1.0, 0.0);      // the point in 3D space the light "looks" at
-        //vec3 lightDirection = normalize(lightFocus - lightPosition);
-        vec3 lightDirection = vec3(-0.2f, -1.0f, -0.3f);
-        vec3 fogLightDirection = normalize(lightFocus - fogLightPosition);
+        vec3 lightPosition = vec3(carMove.x, 1.0f, carMove.z + 1.5f); // the location of the light in 3D space
+        vec3 lightFocus(0.0, 0.0, -1.0);      // the point in 3D space the light "looks" at
+        vec3 lightDirection = normalize(lightFocus - lightPosition);
         
         float lightNearPlane = 1.0f;
-        float lightFarPlane = 180.0f;
+        float lightFarPlane = 200.0f;
         
-        mat4 lightProjectionMatrix = //frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
-                perspective(20.0f, (float) DEPTH_MAP_TEXTURE_SIZE / (float) DEPTH_MAP_TEXTURE_SIZE, lightNearPlane,
-                            lightFarPlane);
+        mat4 lightProjectionMatrix = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
+//                perspective(20.0f, (float) DEPTH_MAP_TEXTURE_SIZE / (float) DEPTH_MAP_TEXTURE_SIZE, lightNearPlane,
+//                            lightFarPlane);
         mat4 lightViewMatrix = lookAt(lightPosition, lightFocus, vec3(0.0f, 1.0f, 0.0f));
         mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
         
@@ -777,11 +773,9 @@ int main(int argc, char *argv[]) {
         
         // Set light position on scene shader
         SetUniformVec3(shaderScene, "light_position", lightPosition);
-        SetUniformVec3(shaderScene, "fog_light_position", fogLightPosition);
         
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
-        SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
         
         // Light parameters for point light (light two)
         vec3 lightPosition2 = vec3(1 + carMove.x, -0, 0.0f + carMove.z); // the location of the light in 3D space
@@ -794,10 +788,6 @@ int main(int argc, char *argv[]) {
         mat4 lightProjectionMatrix2 = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane2, lightFarPlane2);
         mat4 lightViewMatrix2 = lookAt(lightPosition2, lightFocus2, vec3(0.0f, 1.0f, 0.0f));
         mat4 lightSpaceMatrix2 = lightProjectionMatrix2 * lightViewMatrix2;
-        
-        // Set light space matrix on both shaders
-        SetUniformMat4(shaderScene, "lightMatrix2", lightSpaceMatrix2);
-        //SetUniformMat4(lightShaderProgram, "lightMatrix", lightSpaceMatrix);
         
         // Set light far and near planes on scene shader
         SetUniform1Value(shaderScene, "light_near_plane2", lightNearPlane2);
@@ -989,23 +979,9 @@ int main(int argc, char *argv[]) {
             
             // Toggle lights
             if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-                if (carLight == 0) { carLight = 1; }
-                else { carLight = 0; }
-//                glUseProgram(shaderScene);
-//                SetUniform1Value(shaderScene, "useCarLight", carLight);
-                
-//                glUseProgram(shaderScene);
-//                glUniform1i(lightFlag, carLight);
+                carLight = !carLight;
             }
             previousLstate = glfwGetKey(window, GLFW_KEY_L);
-            
-//            if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-//                toggleLights = !toggleLights;
-//                glUseProgram(shaderScene);
-//                glUniform1i(lightFlag, toggleLights);
-//            }
-//            previousLstate = glfwGetKey(window, GLFW_KEY_L);
-
             
             double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);

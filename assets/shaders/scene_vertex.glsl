@@ -10,13 +10,10 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 uniform mat4 light_view_proj_matrix;
-uniform mat4 worldOrientationMatrix;
-//uniform mat4 lightMatrix2;
 
 out vec3 fragment_normal;
 out vec3 fragment_position;
 out vec4 fragment_position_light_space;
-//out vec4 fragment_position_light_space2;
 out vec2 vertexUV;
 
 void main()
@@ -25,6 +22,5 @@ void main()
     fragment_normal = mat3(model_matrix) * normals;
     fragment_position = vec3(model_matrix * vec4(position, 1.0));
     fragment_position_light_space = light_view_proj_matrix * vec4(fragment_position, 1.0);
-//    fragment_position_light_space2 = lightMatrix2 * vec4(fragment_position, 1.0);
     gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
 }
