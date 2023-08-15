@@ -160,12 +160,12 @@ struct WorldChunk {
     }
     
     [[nodiscard]] mat4 getGroundMatrix() const {
-        return translate(mat4(1.0f), vec3(0.0f, -0.6f, chunkPositionZ)) *
+        return translate(mat4(1.0f), vec3(0.0f, -0.3f, chunkPositionZ)) *
                scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
     }
     
     [[nodiscard]] mat4 getRoadMatrix() const {
-        return translate(mat4(1.0f), vec3(0.0f, -0.4f, chunkPositionZ)) *
+        return translate(mat4(1.0f), vec3(0.0f, -0.1f, chunkPositionZ)) *
                scale(mat4(1.0f), vec3(10.0f, 0.3f, 100.0f));
     }
 };
@@ -724,10 +724,7 @@ int main(int argc, char *argv[]) {
     glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
     
     // Other OpenGL states to set once
-    // Enable Backface culling
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    
     
     glBindVertexArray(vao);
     
