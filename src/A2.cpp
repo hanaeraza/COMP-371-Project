@@ -74,7 +74,9 @@ struct PosGenerator {
 };
 
 struct WorldChunk {
-    enum itemType {SMALL_TREE, BIG_TREE, BUSH, ROCK};
+    enum itemType {
+        SMALL_TREE, BIG_TREE, BUSH, ROCK
+    };
     
     vector<PosGenerator> bigTreePositions;
     vector<PosGenerator> smallTreePositions;
@@ -108,7 +110,8 @@ struct WorldChunk {
             case SMALL_TREE:
                 positions = &smallTreePositions;
                 break;
-            default:break;
+            default:
+                break;
         }
         
         bool (&occupiedGrids)[48][101] = itemPos.leftSide ? occupiedGridsLeft : occupiedGridsRight;
@@ -147,7 +150,7 @@ struct WorldChunk {
             // Small trees on right & left sides
             insertItem(PosGenerator(chunkPositionZ, 5.0f, false), SMALL_TREE);
             insertItem(PosGenerator(chunkPositionZ, 5.0f, true), SMALL_TREE);
-
+            
             // Bushes on right & left sides
             insertItem(PosGenerator(chunkPositionZ, 5.0f, false), BUSH);
             insertItem(PosGenerator(chunkPositionZ, 5.0f, true), BUSH);
@@ -781,62 +784,46 @@ int main(int argc, char *argv[]) {
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
         SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
-
+        
         // Night and Day Timer
         SetUniform1fValue(shaderScene, "intensity", intensity); // Set initial intensity
         
         if (glfwGetTime() <= 5) {
             SetUniform1fValue(shaderScene, "intensity", 0.2);
-        }
-        else if (glfwGetTime() <= 5.5 || glfwGetTime() >= 21.5) {
+        } else if (glfwGetTime() <= 5.5 || glfwGetTime() >= 21.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.25);
-        }
-        else if (glfwGetTime() <= 6 || glfwGetTime() >= 21) {
+        } else if (glfwGetTime() <= 6 || glfwGetTime() >= 21) {
             SetUniform1fValue(shaderScene, "intensity", 0.3);
-        }
-        else if (glfwGetTime() <= 6.5 || glfwGetTime() >= 20.5) {
+        } else if (glfwGetTime() <= 6.5 || glfwGetTime() >= 20.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.35);
-        }
-        else if (glfwGetTime() <= 7 || glfwGetTime() >= 20) {
+        } else if (glfwGetTime() <= 7 || glfwGetTime() >= 20) {
             SetUniform1fValue(shaderScene, "intensity", 0.4);
-        }
-        else if (glfwGetTime() <= 7.5 || glfwGetTime() >= 19.5) {
+        } else if (glfwGetTime() <= 7.5 || glfwGetTime() >= 19.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.45);
-        }
-        else if (glfwGetTime() <= 8 || glfwGetTime() >= 19) {
+        } else if (glfwGetTime() <= 8 || glfwGetTime() >= 19) {
             SetUniform1fValue(shaderScene, "intensity", 0.5);
-        }
-        else if (glfwGetTime() <= 8.5 || glfwGetTime() >= 18.5) {
+        } else if (glfwGetTime() <= 8.5 || glfwGetTime() >= 18.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.55);
-        }
-        else if (glfwGetTime() <= 9 || glfwGetTime() >= 18) {
+        } else if (glfwGetTime() <= 9 || glfwGetTime() >= 18) {
             SetUniform1fValue(shaderScene, "intensity", 0.6);
-        }
-        else if (glfwGetTime() <= 9.5 || glfwGetTime() >= 17.5) {
+        } else if (glfwGetTime() <= 9.5 || glfwGetTime() >= 17.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.65);
-        }
-        else if (glfwGetTime() <= 10 || glfwGetTime() >= 17) {
+        } else if (glfwGetTime() <= 10 || glfwGetTime() >= 17) {
             SetUniform1fValue(shaderScene, "intensity", 0.7);
-        }
-        else if (glfwGetTime() <= 10.5 || glfwGetTime() >= 16.5) {
+        } else if (glfwGetTime() <= 10.5 || glfwGetTime() >= 16.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.75);
-        }
-        else if (glfwGetTime() <= 11 || glfwGetTime() >= 16) {
+        } else if (glfwGetTime() <= 11 || glfwGetTime() >= 16) {
             SetUniform1fValue(shaderScene, "intensity", 0.8);
-        }
-        else if (glfwGetTime() <= 11.5 || glfwGetTime() >= 15.5) {
+        } else if (glfwGetTime() <= 11.5 || glfwGetTime() >= 15.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.85);
-        }
-        else if (glfwGetTime() <= 12 || glfwGetTime() >= 15) {
+        } else if (glfwGetTime() <= 12 || glfwGetTime() >= 15) {
             SetUniform1fValue(shaderScene, "intensity", 0.9);
-        }
-        else if (glfwGetTime() <= 12.5 || glfwGetTime() >= 14.5) {
+        } else if (glfwGetTime() <= 12.5 || glfwGetTime() >= 14.5) {
             SetUniform1fValue(shaderScene, "intensity", 0.95);
-        }
-        else {
+        } else {
             SetUniform1fValue(shaderScene, "intensity", 1.0);
         }
-
+        
         if (glfwGetTime() >= 25) {
             glfwSetTime(0.0);
         }
