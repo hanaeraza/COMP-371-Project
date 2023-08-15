@@ -35,3 +35,9 @@ cmake --build <build_folder> --target install
 - 0 = free camera (ground)
 - 1 = fixed camera (birds eye)
 
+## Credits
+
+- Skybox Creation: [LearnOpenGL Tutorial](https://learnopengl.com/Advanced-OpenGL/Cubemaps)
+- 360 Skybox Texture: [AmbientCG](https://ambientcg.com/view?id=DaySkyHDRI027B)
+- Panorama to Cubemap Conversion: [Panorama-to-Cubemap Tool](https://jaxry.github.io/panorama-to-cubemap/)
+
