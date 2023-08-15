@@ -14,7 +14,7 @@ uniform mat4 light_view_proj_matrix;
 out vec3 fragment_normal;
 out vec3 fragment_position;
 out vec4 fragment_position_light_space;
-out vec2 vertexUV; 
+out vec2 vertexUV;
 
 void main()
 {
