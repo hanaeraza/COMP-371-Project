@@ -673,7 +673,7 @@ int main(int argc, char *argv[]) {
     vec3 carMove(0, 0, 1980.0f);
     
     // Other camera parameters
-    float cameraSpeed = 12.0f;
+    float cameraSpeed = 0.1f;
     float cameraFastSpeed = 2 * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
@@ -681,7 +681,7 @@ int main(int argc, char *argv[]) {
     bool cameraFirstPerson = true;
     
     int selection = 0;
-    int intensity = 0.2;
+    float intensity = 0.2f;
     
     
     // Set projection matrix for shader, this won't change
@@ -981,8 +981,8 @@ int main(int argc, char *argv[]) {
             
             // Convert to spherical coordinates
             const float cameraAngularSpeed = 60.0f;
-            cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-            cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+            cameraHorizontalAngle -= dx * cameraAngularSpeed * 0.015;
+            cameraVerticalAngle -= dy * cameraAngularSpeed * 0.015;
             
             // Clamp vertical angle to [-85, 85] degrees
             cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
@@ -1113,8 +1113,8 @@ int main(int argc, char *argv[]) {
                 lastMousePosY = mousePosY;
                 
                 // Convert to spherical coordinates
-                cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-                cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+                cameraHorizontalAngle -= dx * cameraAngularSpeed;
+                cameraVerticalAngle -= dy * cameraAngularSpeed;
                 
                 // Clamp vertical angle to [-85, 85] degrees
                 cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
@@ -1140,24 +1140,24 @@ int main(int argc, char *argv[]) {
                 
                 if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
                 {
-                    cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
+                    cameraPosition -= cameraSideVector * currentCameraSpeed;
                     
-                    carMove -= cameraSideVector * currentCameraSpeed * dt;
+                    carMove -= cameraSideVector * currentCameraSpeed;
                 }
                 
                 if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
                 {
-                    cameraPosition += cameraSideVector * currentCameraSpeed * dt;
+                    cameraPosition += cameraSideVector * currentCameraSpeed;
                     
-                    carMove += cameraSideVector * currentCameraSpeed * dt;
+                    carMove += cameraSideVector * currentCameraSpeed;
                 }
                 
                 if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
                 {
                     vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
-                    cameraPosition -= moveDirection * currentCameraSpeed * dt;
+                    cameraPosition -= moveDirection * currentCameraSpeed;
                     
-                    carMove -= moveDirection * currentCameraSpeed * dt;
+                    carMove -= moveDirection * currentCameraSpeed;
                     
                     rotX -= 5.0f; // Car wheels rotation
                 }
@@ -1165,9 +1165,9 @@ int main(int argc, char *argv[]) {
                 if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
                 {
                     vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
-                    cameraPosition += moveDirection * currentCameraSpeed * dt;
+                    cameraPosition += moveDirection * currentCameraSpeed;
                     
-                    carMove += moveDirection * currentCameraSpeed * dt;
+                    carMove += moveDirection * currentCameraSpeed;
                     
                     rotX += 5.0f; // Car wheels rotation
                     
@@ -1216,8 +1216,8 @@ int main(int argc, char *argv[]) {
                 lastMousePosY = mousePosY;
                 
                 // Convert to spherical coordinates
-                cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-                cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+                cameraHorizontalAngle -= dx * cameraAngularSpeed;
+                cameraVerticalAngle -= dy * cameraAngularSpeed;
                 
                 // Clamp vertical angle to [-85, 85] degrees
                 cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
