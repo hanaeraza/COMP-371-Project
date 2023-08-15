@@ -800,40 +800,57 @@ int main(int argc, char *argv[]) {
         
         // Night and Day Timer
         SetUniform1fValue(shaderScene, "intensity", intensity); // Set initial intensity
-        
+        float skyStrength = 1.0f;
         if (glfwGetTime() <= 5) {
+            skyStrength = 0.2f;
             SetUniform1fValue(shaderScene, "intensity", 0.2);
         } else if (glfwGetTime() <= 5.5 || glfwGetTime() >= 21.5) {
+            skyStrength = 0.25f;
             SetUniform1fValue(shaderScene, "intensity", 0.25);
         } else if (glfwGetTime() <= 6 || glfwGetTime() >= 21) {
+            skyStrength = 0.3f;
             SetUniform1fValue(shaderScene, "intensity", 0.3);
         } else if (glfwGetTime() <= 6.5 || glfwGetTime() >= 20.5) {
+            skyStrength = 0.35f;
             SetUniform1fValue(shaderScene, "intensity", 0.35);
         } else if (glfwGetTime() <= 7 || glfwGetTime() >= 20) {
+            skyStrength = 0.4f;
             SetUniform1fValue(shaderScene, "intensity", 0.4);
         } else if (glfwGetTime() <= 7.5 || glfwGetTime() >= 19.5) {
+            skyStrength = 0.45f;
             SetUniform1fValue(shaderScene, "intensity", 0.45);
         } else if (glfwGetTime() <= 8 || glfwGetTime() >= 19) {
+            skyStrength = 0.5f;
             SetUniform1fValue(shaderScene, "intensity", 0.5);
         } else if (glfwGetTime() <= 8.5 || glfwGetTime() >= 18.5) {
+            skyStrength = 0.55f;
             SetUniform1fValue(shaderScene, "intensity", 0.55);
         } else if (glfwGetTime() <= 9 || glfwGetTime() >= 18) {
+            skyStrength = 0.6f;
             SetUniform1fValue(shaderScene, "intensity", 0.6);
         } else if (glfwGetTime() <= 9.5 || glfwGetTime() >= 17.5) {
+            skyStrength = 0.65f;
             SetUniform1fValue(shaderScene, "intensity", 0.65);
         } else if (glfwGetTime() <= 10 || glfwGetTime() >= 17) {
+            skyStrength = 0.7f;
             SetUniform1fValue(shaderScene, "intensity", 0.7);
         } else if (glfwGetTime() <= 10.5 || glfwGetTime() >= 16.5) {
+            skyStrength = 0.75f;
             SetUniform1fValue(shaderScene, "intensity", 0.75);
         } else if (glfwGetTime() <= 11 || glfwGetTime() >= 16) {
+            skyStrength = 0.8f;
             SetUniform1fValue(shaderScene, "intensity", 0.8);
         } else if (glfwGetTime() <= 11.5 || glfwGetTime() >= 15.5) {
+            skyStrength = 0.85f;
             SetUniform1fValue(shaderScene, "intensity", 0.85);
         } else if (glfwGetTime() <= 12 || glfwGetTime() >= 15) {
+            skyStrength = 0.9f;
             SetUniform1fValue(shaderScene, "intensity", 0.9);
         } else if (glfwGetTime() <= 12.5 || glfwGetTime() >= 14.5) {
+            skyStrength = 0.95f;
             SetUniform1fValue(shaderScene, "intensity", 0.95);
         } else {
+            skyStrength = 1.0f;
             SetUniform1fValue(shaderScene, "intensity", 1.0);
         }
         
@@ -933,7 +950,10 @@ int main(int argc, char *argv[]) {
         SetUniformMat4(shaderSkybox, "view", viewMatrix);
         SetUniformMat4(shaderSkybox, "projection", projectionMatrix);
         
-        glDepthFunc(GL_LEQUAL); // Change depth function so that the skybox's maximmum depth value get rendered
+        // Apply daytime light changes to sky
+        glUniform1f(glGetUniformLocation(shaderSkybox, "ambientStrength"), skyStrength);
+        
+        glDepthFunc(GL_LEQUAL); // Change depth function so that the skybox's maximmum depth value gets rendered
         glBindVertexArray(skyboxVAO);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
