@@ -1,27 +1,15 @@
-// Assignment 2
 
-#include <iostream>
 #include <algorithm>
 #include <vector>
 #include <map>
 #include <random>
 #include <cmath>
 
-#define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
-
-#include <GL/glew.h>    // Include GLEW - OpenGL Extension Wrangler
-
-#include <GLFW/glfw3.h> // GLFW provides a cross-platform interface for creating a graphical context,
-// initializing OpenGL and binding inputs
-
+#include "shaders.h" // Note that GL is already included in shaders.h
 #include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
-#include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
-#include <glm/gtc/type_ptr.hpp>
-
-#include "shaderloader.h"
+#include <GLFW/glfw3.h> // GLFW provides a cross-platform interface for creating a graphical context,
 
 #define STB_IMAGE_IMPLEMENTATION
-
 #include <stb_image.h>
 
 #if defined(__APPLE__)
@@ -29,9 +17,6 @@ string pathPrefix = "../";
 #else
 string pathPrefix = "";
 #endif
-
-using namespace glm;
-using namespace std;
 
 float rotX = 0.0f;
 int camNum = 3;
@@ -208,32 +193,6 @@ GLuint setupModelVBO(string path, int &vertexCount);
 //Sets up a model using an Element Buffer Object to refer to vertex data
 GLuint setupModelEBO(string path, int &vertexCount);
 
-
-// shader variable setters
-void SetUniformMat4(GLuint shader_id, const char *uniform_name, mat4 uniform_value) {
-    glUseProgram(shader_id);
-    glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
-}
-
-void SetUniformVec3(GLuint shader_id, const char *uniform_name, vec3 uniform_value) {
-    glUseProgram(shader_id);
-    glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
-}
-
-template<class T>
-void SetUniform1Value(GLuint shader_id, const char *uniform_name, T uniform_value) {
-    glUseProgram(shader_id);
-    glUniform1i(glGetUniformLocation(shader_id, uniform_name), uniform_value);
-    glUseProgram(0);
-}
-
-template<class T>
-void SetUniform1fValue(GLuint shader_id, const char *uniform_name, T uniform_value) {
-    glUseProgram(shader_id);
-    glUniform1f(glGetUniformLocation(shader_id, uniform_name), uniform_value);
-    glUseProgram(0);
-}
-
 GLFWwindow *window = nullptr;
 
 bool InitContext();
@@ -300,23 +259,6 @@ const TexturedColoredVertex texturedCubeVertexArray[] = {  // position, normal, 
         TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f))
 };
 
-void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix) {
-    glUseProgram(shaderProgram);
-    GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projection_matrix");
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-}
-
-void setViewMatrix(int shaderProgram, mat4 viewMatrix) {
-    glUseProgram(shaderProgram);
-    GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "view_matrix");
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-}
-
-void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
-    glUseProgram(shaderProgram);
-    GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "model_matrix");
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &_worldMatrix[0][0]);
-}
 
 //Function to draw bushes
 void drawBush(GLuint shader, float z, float x, float initial, int draw, GLuint text) {
@@ -568,19 +510,15 @@ void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint ti
 
 int main(int argc, char *argv[]) {
     if (!InitContext()) return -1;
-    
+
     // background
     glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
     
     std::string shaderPathPrefix = pathPrefix + "assets/shaders/";
     
-    GLuint shaderScene = loadSHADER(shaderPathPrefix + "scene_vertex.glsl", shaderPathPrefix + "scene_fragment.glsl");
-    
-    GLuint shaderShadow = loadSHADER(shaderPathPrefix + "shadow_vertex.glsl",
-                                     shaderPathPrefix + "shadow_fragment.glsl");
-    
-    GLuint shaderSkybox = loadSHADER(shaderPathPrefix + "skybox.vert",
-                                     shaderPathPrefix + "skybox.frag");
+    GLuint shaderScene = compileAndLinkShaders(SCENE_VERT, SCENE_FRAG);
+    GLuint shaderShadow = compileAndLinkShaders(SHADOW_VERT, SHADOW_FRAG);
+    GLuint shaderSkybox = compileAndLinkShaders(SKYBOX_VERT, SKYBOX_FRAG);
     
     // Load Textures
     GLuint bushTextureID = loadTexture((pathPrefix + "Assets/Textures/bush.jpg").c_str());
@@ -802,36 +740,36 @@ int main(int argc, char *argv[]) {
         SetUniform1fValue(shaderScene, "intensity", intensity); // Set initial intensity
         float skyStrength = 1.0f;
         if (glfwGetTime() <= 5) {
-//            skyStrength = 0.2f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.2);
-//        } else if (glfwGetTime() <= 5.5 || glfwGetTime() >= 21.5) {
-//            skyStrength = 0.25f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.25);
-//        } else if (glfwGetTime() <= 6 || glfwGetTime() >= 21) {
-//            skyStrength = 0.3f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.3);
-//        } else if (glfwGetTime() <= 6.5 || glfwGetTime() >= 20.5) {
-//            skyStrength = 0.35f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.35);
-//        } else if (glfwGetTime() <= 7 || glfwGetTime() >= 20) {
-//            skyStrength = 0.4f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.4);
-//        } else if (glfwGetTime() <= 7.5 || glfwGetTime() >= 19.5) {
-//            skyStrength = 0.45f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.45);
-//        } else if (glfwGetTime() <= 8 || glfwGetTime() >= 19) {
-//            skyStrength = 0.5f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.5);
-//        } else if (glfwGetTime() <= 8.5 || glfwGetTime() >= 18.5) {
-//            skyStrength = 0.55f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.55);
-//        } else if (glfwGetTime() <= 9 || glfwGetTime() >= 18) {
-//            skyStrength = 0.6f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.6);
-//        } else if (glfwGetTime() <= 9.5 || glfwGetTime() >= 17.5) {
-//            skyStrength = 0.65f;
-//            SetUniform1fValue(shaderScene, "intensity", 0.65);
-//        } else if (glfwGetTime() <= 10 || glfwGetTime() >= 17) {
+            skyStrength = 0.2f;
+            SetUniform1fValue(shaderScene, "intensity", 0.2);
+        } else if (glfwGetTime() <= 5.5 || glfwGetTime() >= 21.5) {
+            skyStrength = 0.25f;
+            SetUniform1fValue(shaderScene, "intensity", 0.25);
+        } else if (glfwGetTime() <= 6 || glfwGetTime() >= 21) {
+            skyStrength = 0.3f;
+            SetUniform1fValue(shaderScene, "intensity", 0.3);
+        } else if (glfwGetTime() <= 6.5 || glfwGetTime() >= 20.5) {
+            skyStrength = 0.35f;
+            SetUniform1fValue(shaderScene, "intensity", 0.35);
+        } else if (glfwGetTime() <= 7 || glfwGetTime() >= 20) {
+            skyStrength = 0.4f;
+            SetUniform1fValue(shaderScene, "intensity", 0.4);
+        } else if (glfwGetTime() <= 7.5 || glfwGetTime() >= 19.5) {
+            skyStrength = 0.45f;
+            SetUniform1fValue(shaderScene, "intensity", 0.45);
+        } else if (glfwGetTime() <= 8 || glfwGetTime() >= 19) {
+            skyStrength = 0.5f;
+            SetUniform1fValue(shaderScene, "intensity", 0.5);
+        } else if (glfwGetTime() <= 8.5 || glfwGetTime() >= 18.5) {
+            skyStrength = 0.55f;
+            SetUniform1fValue(shaderScene, "intensity", 0.55);
+        } else if (glfwGetTime() <= 9 || glfwGetTime() >= 18) {
+            skyStrength = 0.6f;
+            SetUniform1fValue(shaderScene, "intensity", 0.6);
+        } else if (glfwGetTime() <= 9.5 || glfwGetTime() >= 17.5) {
+            skyStrength = 0.65f;
+            SetUniform1fValue(shaderScene, "intensity", 0.65);
+        } else if (glfwGetTime() <= 10 || glfwGetTime() >= 17) {
             skyStrength = 0.7f;
             SetUniform1fValue(shaderScene, "intensity", 0.7);
         } else if (glfwGetTime() <= 10.5 || glfwGetTime() >= 16.5) {
