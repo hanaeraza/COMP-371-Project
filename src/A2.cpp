@@ -728,7 +728,7 @@ int main(int argc, char *argv[]) {
     
     glBindVertexArray(vao);
     
-    int previousXstate = GLFW_RELEASE;
+    int previousTstate = GLFW_RELEASE;
     int previousZstate = GLFW_RELEASE;
     int previousLstate = GLFW_RELEASE;
     int lastCState = GLFW_RELEASE;
@@ -950,7 +950,7 @@ int main(int argc, char *argv[]) {
             
             
             // Toggle texture
-            if (previousXstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+            if (previousTstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
                 glGetUniformiv(shaderScene, textureflag, currentvalue);
                 if (currentvalue[0] == 1) {
                     glUseProgram(shaderScene);
@@ -961,7 +961,7 @@ int main(int argc, char *argv[]) {
                     glUniform1i(textureflag, 1);
                 }
             }
-            previousXstate = glfwGetKey(window, GLFW_KEY_X);
+            previousTstate = glfwGetKey(window, GLFW_KEY_T);
             
             // Toggle shadow
             if (previousZstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {

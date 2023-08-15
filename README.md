@@ -30,7 +30,7 @@ cmake --build <build_folder> --target install
 - S = move camera backwards
 - D = move camera right
 ### Toggles
-- X = toggle textures 
+- T = toggle textures 
 - Z = toggle shadows
 - 0 = free camera (ground)
 - 1 = fixed camera (birds eye)
