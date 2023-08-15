@@ -19,8 +19,7 @@ include(BuildGLEW)
 include(BuildGLFW)
 include(BuildGLM)
 
-# A2
-set(EXEC A2)
+set(EXEC ProceduralWorld)
 
 set(ASSETS assets)
 
@@ -33,7 +32,6 @@ target_include_directories(${EXEC} PRIVATE include)
 target_link_libraries(${EXEC} OpenGL::GL glew_s glfw glm)
 
 list(APPEND BIN ${EXEC})
-# end A2
 
 # install files to install location
 install(TARGETS ${BIN} DESTINATION ${CMAKE_INSTALL_PREFIX})
