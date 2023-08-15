@@ -615,7 +615,7 @@ int main(int argc, char *argv[]) {
     GLint *currentvalueS = p_arrayS;
     
     GLuint lightFlag = glGetUniformLocation(shaderScene, "lightsOn");
-    bool toggleLights = false;
+    bool toggleLights = true;
     glUniform1i(lightFlag, toggleLights);
     
     // Setup texture and framebuffer for creating shadow map
@@ -710,6 +710,7 @@ int main(int argc, char *argv[]) {
     // Set light color on scene shader
     SetUniformVec3(shaderScene, "light_color", vec3(1.0, 1.0, 1.0));
     SetUniformVec3(shaderScene, "fog_light_color", vec3(1.0, 1.0, 1.0));
+    SetUniformVec3(shaderScene, "light_color2", vec3(1.0, 1.0, 1.0)); // Set light color on light shader
     
     // Set object color on scene shader
     SetUniformVec3(shaderScene, "object_color", vec3(1.0, 1.0, 1.0));
@@ -781,6 +782,31 @@ int main(int argc, char *argv[]) {
         // Set light direction on scene shader
         SetUniformVec3(shaderScene, "light_direction", lightDirection);
         SetUniformVec3(shaderScene, "fog_light_direction", fogLightDirection);
+        
+        // Light parameters for point light (light two)
+        vec3 lightPosition2 = vec3(1 + carMove.x, -0, 0.0f + carMove.z); // the location of the light in 3D space
+        vec3 lightFocus2(0.0, -1.0, 10.0 + carMove.z);      // the point in 3D space the light "looks" at
+        vec3 lightDirection2 = normalize(lightFocus2 - lightPosition2);
+        
+        float lightNearPlane2 = 0.0f; //1
+        float lightFarPlane2 = 15.0f; //180
+        
+        mat4 lightProjectionMatrix2 = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane2, lightFarPlane2);
+        mat4 lightViewMatrix2 = lookAt(lightPosition2, lightFocus2, vec3(0.0f, 1.0f, 0.0f));
+        mat4 lightSpaceMatrix2 = lightProjectionMatrix2 * lightViewMatrix2;
+        
+        // Set light space matrix on both shaders
+        SetUniformMat4(shaderScene, "lightMatrix2", lightSpaceMatrix2);
+        //SetUniformMat4(lightShaderProgram, "lightMatrix", lightSpaceMatrix);
+        
+        // Set light far and near planes on scene shader
+        SetUniform1Value(shaderScene, "light_near_plane2", lightNearPlane2);
+        SetUniform1Value(shaderScene, "light_far_plane2", lightFarPlane2);
+        
+        SetUniformVec3(shaderScene, "light_position2", lightPosition2); // Set light position on scene shader
+        SetUniformVec3(shaderScene, "light_direction2", lightDirection2); // Set light direction on scene shader
+        SetUniform1Value(shaderScene, "useCarLight", carLight);
+        SetUniformVec3(shaderScene, "light_color2", vec3(1.0, 1.0, 1.0)); // Set light color on light shader
         
         // Night and Day Timer
         SetUniform1fValue(shaderScene, "intensity", intensity); // Set initial intensity
@@ -963,12 +989,23 @@ int main(int argc, char *argv[]) {
             
             // Toggle lights
             if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-                toggleLights = !toggleLights;
-                glUseProgram(shaderScene);
-                glUniform1i(lightFlag, toggleLights);
+                if (carLight == 0) { carLight = 1; }
+                else { carLight = 0; }
+//                glUseProgram(shaderScene);
+//                SetUniform1Value(shaderScene, "useCarLight", carLight);
+                
+//                glUseProgram(shaderScene);
+//                glUniform1i(lightFlag, carLight);
             }
             previousLstate = glfwGetKey(window, GLFW_KEY_L);
             
+//            if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+//                toggleLights = !toggleLights;
+//                glUseProgram(shaderScene);
+//                glUniform1i(lightFlag, toggleLights);
+//            }
+//            previousLstate = glfwGetKey(window, GLFW_KEY_L);
+
             
             double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
@@ -1272,7 +1309,7 @@ bool InitContext() {
 #endif
     
     // Create Window and rendering context using GLFW, resolution is 800x600
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Comp371 - Lab 08", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Comp371 - Procedural World", NULL, NULL);
     if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();

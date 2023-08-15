@@ -9,16 +9,25 @@ uniform vec3 fog_light_color;
 uniform vec3 fog_light_position;
 uniform vec3 fog_light_direction;
 
+uniform vec3 light_color2;
+uniform vec3 light_position2;
+uniform vec3 light_direction2;
+
 uniform vec3 object_color;
 uniform sampler2D textureSampler;
 uniform int useTexture = 0;
 uniform int useShadow = 0;
+uniform int useCarLight;
 uniform bool lightsOn;
 
 
 const float shading_ambient_strength    = 1.0;
 const float shading_diffuse_strength    = 1.0;
 const float shading_specular_strength   = 1.0;
+
+const float shading_ambient_strength2 = 0.7;
+const float shading_diffuse_strength2 = 0.6;
+const float shading_specular_strength2 = 0.3;
 
 const float fog_shading_ambient_strength    = 0.1;
 const float fog_shading_diffuse_strength    = 0.9;
@@ -28,6 +37,12 @@ uniform float light_cutoff_outer;
 uniform float light_cutoff_inner;
 uniform float light_near_plane;
 uniform float light_far_plane;
+
+uniform float light_cutoff_inner2;
+uniform float light_cutoff_outer2;
+uniform float light_near_plane2;
+uniform float light_far_plane2;
+
 uniform float intensity;
 
 uniform vec3 view_position;
@@ -36,6 +51,7 @@ uniform sampler2D shadow_map;
 
 in vec3 fragment_position;
 in vec4 fragment_position_light_space;
+in vec4 fragment_position_light_space2;
 in vec3 fragment_normal;
 in vec2 vertexUV;
 
@@ -77,14 +93,14 @@ float shadow_scalar() {
 }
 
 float spotlight_scalar() {
-    float theta = dot(normalize(fragment_position - light_position), light_direction);
-
-    if (theta > light_cutoff_inner) {
-        return 1.0;
-    } else if (theta > light_cutoff_outer) {
-        return (1.0 - cos(PI * (theta - light_cutoff_outer) / (light_cutoff_inner - light_cutoff_outer))) / 2.0;
-    } else {
+    float theta = dot(normalize(fragment_position - light_position2), light_direction2);
+    if (theta > light_cutoff_inner2) {
         return 0.0;
+    } else if (theta > light_cutoff_outer2) {
+        return (1.0 - cos(3.14* (theta - light_cutoff_outer2) / (light_cutoff_inner2 - light_cutoff_outer2))) / 2.0;
+    }
+    else {
+        return 1.0;
     }
 }
 
@@ -93,10 +109,13 @@ void main()
     vec3 ambient = vec3(0.0f);
     vec3 diffuse = vec3(0.0f);
     vec3 specular = vec3(0.0f);
+
     vec3 ambientFog = vec3(0.0f);
     vec3 diffuseFog = vec3(0.0f);
     vec3 specularFog = vec3(0.0f);
 
+    vec3 diffuse2 = vec3(0.0f);
+    vec3 specular2 = vec3(0.0f);
 
     float scalar = shadow_scalar();
     //float scalar = shadow_scalar() * spotlight_scalar();
@@ -134,11 +153,21 @@ void main()
         fogLightColor = ambient_color(fog_light_color, 0.9);
     }
 
-    color = (((intensity * lightColor) + fogLightColor)/2) * object_color;
+
+    if (useCarLight==1){
+        diffuse2 =  spotlight_scalar()*diffuse_color(light_color2, light_position2, shading_diffuse_strength2, light_direction);
+        specular2 =  spotlight_scalar()*specular_color(light_color2, light_position2, shading_specular_strength2, light_direction);
+        lightColor = (specular + specular2 + diffuse + diffuse2 + ambient);
+    } else {}
+    color = intensity * lightColor  + fogLightColor * object_color;
+
+
+//    color = (((intensity * lightColor) + fogLightColor)/2) * object_color;
 
     if (useTexture == 1) {
         result = vec4(color, 1.0f);
     } else {
         result = texture(textureSampler, vertexUV) * vec4(color, 1.0f);
     }
+
 }
