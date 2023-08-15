@@ -1,27 +1,22 @@
 
+#define PATH_PREFIX "../" // Redefine your path prefix to the assets directory here
+
+#define STB_IMAGE_IMPLEMENTATION
+
+#include "shaders.h" // Note that GL is already included in shaders.h
+#include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
+#include <GLFW/glfw3.h> // GLFW provides a cross-platform interface for creating a graphical context,
+#include <stb_image.h>
+
 #include <algorithm>
 #include <vector>
 #include <map>
 #include <random>
 #include <cmath>
 
-#include "shaders.h" // Note that GL is already included in shaders.h
-#include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
-#include <GLFW/glfw3.h> // GLFW provides a cross-platform interface for creating a graphical context,
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-#if defined(__APPLE__)
-string pathPrefix = "../";
-#else
-string pathPrefix = "";
-#endif
-
 float rotX = 0.0f;
 int camNum = 3;
 bool carLight = false;
-
 
 struct WorldChunk;
 map<int, WorldChunk> chunksByPosition;
@@ -510,32 +505,30 @@ void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint ti
 
 int main(int argc, char *argv[]) {
     if (!InitContext()) return -1;
-
+    
     // background
     glClearColor(0.41f, 0.44f, 0.62f, 1.0f);
-    
-    std::string shaderPathPrefix = pathPrefix + "assets/shaders/";
     
     GLuint shaderScene = compileAndLinkShaders(SCENE_VERT, SCENE_FRAG);
     GLuint shaderShadow = compileAndLinkShaders(SHADOW_VERT, SHADOW_FRAG);
     GLuint shaderSkybox = compileAndLinkShaders(SKYBOX_VERT, SKYBOX_FRAG);
     
     // Load Textures
-    GLuint bushTextureID = loadTexture((pathPrefix + "Assets/Textures/bush.jpg").c_str());
-    GLuint leavesTextureID = loadTexture((pathPrefix + "Assets/Textures/leaves.png").c_str());
-    GLuint woodTextureID = loadTexture((pathPrefix + "Assets/Textures/wood.jpg").c_str());
-    GLuint roadTextureID = loadTexture((pathPrefix + "Assets/Textures/dirtroad.jpg").c_str());
-    GLuint dirtTextureID = loadTexture((pathPrefix + "Assets/Textures/dirt.png").c_str());
-    GLuint carTextureID = loadTexture((pathPrefix + "Assets/Textures/car.jpg").c_str());
-    GLuint tireTextureID = loadTexture((pathPrefix + "Assets/Textures/tire.jpg").c_str());
+    GLuint bushTextureID = loadTexture(PATH_PREFIX "assets/textures/bush.jpg");
+    GLuint leavesTextureID = loadTexture(PATH_PREFIX "assets/textures/leaves.png");
+    GLuint woodTextureID = loadTexture(PATH_PREFIX "assets/textures/wood.jpg");
+    GLuint roadTextureID = loadTexture(PATH_PREFIX "assets/textures/dirtroad.jpg");
+    GLuint dirtTextureID = loadTexture(PATH_PREFIX "assets/textures/dirt.png");
+    GLuint carTextureID = loadTexture(PATH_PREFIX "assets/textures/car.jpg");
+    GLuint tireTextureID = loadTexture(PATH_PREFIX "assets/textures/tire.jpg");
     
     vector<std::string> skyFaces{
-            pathPrefix + "assets/textures/skybox/px.jpg",  // right
-            pathPrefix + "assets/textures/skybox/nx.jpg",  // left
-            pathPrefix + "assets/textures/skybox/py.jpg",  // top
-            pathPrefix + "assets/textures/skybox/ny.jpg",  // bottom
-            pathPrefix + "assets/textures/skybox/pz.jpg",  // front
-            pathPrefix + "assets/textures/skybox/nz.jpg"   // back
+            PATH_PREFIX "assets/textures/skybox/px.jpg",  // right
+            PATH_PREFIX "assets/textures/skybox/nx.jpg",  // left
+            PATH_PREFIX "assets/textures/skybox/py.jpg",  // top
+            PATH_PREFIX "assets/textures/skybox/ny.jpg",  // bottom
+            PATH_PREFIX "assets/textures/skybox/pz.jpg",  // front
+            PATH_PREFIX "assets/textures/skybox/nz.jpg"   // back
     };
     GLuint cubemapTexture = loadCubemap(skyFaces);
     
