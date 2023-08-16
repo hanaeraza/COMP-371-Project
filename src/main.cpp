@@ -29,7 +29,7 @@ GLuint createSphereObject();
 
 GLuint loadTexture(const char *filename);
 
-GLuint loadCubemap();
+GLuint loadCubemap(vector<std::string> faces);
 
 GLuint createSkyboxObject();
 
@@ -393,14 +393,15 @@ int main(int argc, char *argv[]) {
     GLuint carTextureID = loadTexture(PATH_PREFIX "assets/textures/car.jpg");
     GLuint tireTextureID = loadTexture(PATH_PREFIX "assets/textures/tire.jpg");
     
-    vector<std::string> skyFaces;
-    
-    
-    
-    
-            
-
-    GLuint cubemapTexture = loadCubemap();
+    vector<std::string> skyFaces {
+            PATH_PREFIX "assets/textures/skybox/right.jpeg",  // right
+            PATH_PREFIX "assets/textures/skybox/left.jpeg",  // left
+            PATH_PREFIX "assets/textures/skybox/top.jpeg",  // top
+            PATH_PREFIX "assets/textures/skybox/bottom.jpeg",  // bottom
+            PATH_PREFIX "assets/textures/skybox/front.jpeg",  // front
+            PATH_PREFIX "assets/textures/skybox/back.jpeg"   // back
+    };
+    GLuint cubemapTexture = loadCubemap(skyFaces);
     
     glUseProgram(shaderSkybox);
     vec3 lightColor = vec3(1.0f, 1.0f, 1.0f); // Used for both the scene shader and the skybox shader
@@ -1164,76 +1165,27 @@ GLuint loadTexture(const char *filename) {
 }
 
 // Loads the 6 cube face images, binds and generates the resulting cubemap texture, and returns its ID
-GLuint loadCubemap() {
+GLuint loadCubemap(vector<std::string> faces) {
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
     
     int width, height, nrChannels;
     
-    unsigned char *right = stbi_load(PATH_PREFIX "assets/textures/skybox/right.jpeg", &width, &height, &nrChannels, 0);
-    unsigned char *left = stbi_load(PATH_PREFIX "assets/textures/skybox/left.jpeg", &width, &height, &nrChannels, 0);
-    unsigned char *top = stbi_load(PATH_PREFIX "assets/textures/skybox/top.jpeg", &width, &height, &nrChannels, 0);
-    unsigned char *bottom = stbi_load(PATH_PREFIX "assets/textures/skybox/bottom.jpeg", &width, &height, &nrChannels, 0);
-    unsigned char *front = stbi_load(PATH_PREFIX "assets/textures/skybox/front.jpeg", &width, &height, &nrChannels, 0);
-    unsigned char *back = stbi_load(PATH_PREFIX "assets/textures/skybox/back.jpeg", &width, &height, &nrChannels, 0);
-    
-    if (right) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, right
-        );
-        stbi_image_free(right);
-    } else {
-        std::cout << "Cubemap right tex failed to load. " << std::endl;
-        stbi_image_free(right);
+    // The cube map texture enums can be incremented in order (right, left, top, bottom, front, back)
+    for (unsigned int i = 0; i < faces.size(); i++) {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        
+        if (data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        } else {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
     }
-    if (left) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 1,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, left
-        );
-        stbi_image_free(left);
-    } else {
-        std::cout << "Cubemap left tex failed to load. " << std::endl;
-        stbi_image_free(left);
-    }
-    if (top) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 2,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, top
-        );
-        stbi_image_free(top);
-    } else {
-        std::cout << "Cubemap top tex failed to load. " << std::endl;
-        stbi_image_free(top);
-    }
-    if (bottom) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 3,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, bottom
-        );
-        stbi_image_free(bottom);
-    } else {
-        std::cout << "Cubemap bottom tex failed to load. " << std::endl;
-        stbi_image_free(bottom);
-    }
-    if (front) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 4,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, front
-        );
-        stbi_image_free(front);
-    } else {
-        std::cout << "Cubemap front tex failed to load. " << std::endl;
-        stbi_image_free(front);
-    }
-    if (back) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + 5,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, back
-        );
-        stbi_image_free(back);
-    } else {
-        std::cout << "Cubemap back tex failed to load. " << std::endl;
-        stbi_image_free(back);
-    }
-
-    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1445,16 +1397,13 @@ struct PosGenerator {
     float startPositionZ; // The lower z-boundary of the world chunk which the item will be positioned on
     float x;              // Translation factor on x-axis
     float z;              // Translation factor on y-axis
-    float itemSize;       // Scaling factor for the widest point of the item
-    float gridSize;       // How big the WorldChunk is (in 2D)
-    float roadWidth;      // The width of the road + any additional offset where no objects should be
+    float itemSize;           // Scaling factor for the widest point of the item
+    float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
+    float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
     bool leftSide;
     
     PosGenerator(float startPositionZ, float itemSize, bool leftSide = false) : startPositionZ(startPositionZ),
                                                                                 itemSize(itemSize), leftSide(leftSide) {
-        gridSize = 100.0f;
-        roadWidth = 6.0f;
-        
         itemSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
         
         float startPositionY = (itemSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
@@ -1487,21 +1436,12 @@ struct WorldChunk {
     vector<PosGenerator> bushPositions;
     
     // Num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
-    bool occupiedGridsLeft[48][101];
-    bool occupiedGridsRight[48][101];
+    bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
+    bool occupiedGridsRight[48][101] = {};// Fill with false for all rows & cols
     float chunkPositionZ;
     int chunkPositionID;
     
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
-        
-        // Fill with false for all rows & cols
-        for (int i = 0; i < 48; i++) {
-            for (int j = 0; j < 101; j++) {
-                occupiedGridsLeft[i][j] = false;
-                occupiedGridsRight[i][j] = false;
-            }
-        }
-        
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
         generateItems(60);
@@ -1571,12 +1511,12 @@ struct WorldChunk {
         }
     }
     
-    mat4 getGroundMatrix() const {
+    [[nodiscard]] mat4 getGroundMatrix() const {
         return translate(mat4(1.0f), vec3(0.0f, -0.3f, chunkPositionZ)) *
                scale(mat4(1.0f), vec3(100.0f, 0.1f, 100.0f));
     }
     
-    mat4 getRoadMatrix() const {
+    [[nodiscard]] mat4 getRoadMatrix() const {
         return translate(mat4(1.0f), vec3(0.0f, -0.1f, chunkPositionZ)) *
                scale(mat4(1.0f), vec3(10.0f, 0.3f, 100.0f));
     }
@@ -1620,17 +1560,17 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         SetUniformVec3(shader, "object_color", vec3(0.5f, 0.5f, 0.5f)); // Gray
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
-        for (int j = 0; j < chunk.bigTreePositions.size(); j++) {
-            drawTree(shader, chunk.bigTreePositions[j].z, chunk.bigTreePositions[j].x, 0.0f, 1, woodTextureID, leavesTextureID);
+        for (auto tree: chunk.bigTreePositions) {
+            drawTree(shader, tree.z, tree.x, 0.0f, 1, woodTextureID, leavesTextureID);
         }
         
-        for (int j = 0; j < chunk.smallTreePositions.size(); j++) {
-            drawTree(shader, chunk.smallTreePositions[j].z, chunk.smallTreePositions[j].x, 0.0f, 2, woodTextureID, leavesTextureID);
+        for (auto tree: chunk.smallTreePositions) {
+            drawTree(shader, tree.z, tree.x, 0.0f, 2, woodTextureID, leavesTextureID);
         }
         
         glBindVertexArray(sphereVAO);
-        for (int j = 0; j < chunk.bushPositions.size(); j++) {
-            drawBush(shader, chunk.bushPositions[j].z, chunk.bushPositions[j].x, 0.0f, 1, leavesTextureID);
+        for (auto bush: chunk.bushPositions) {
+            drawBush(shader, bush.z, bush.x, 0.0f, 1, leavesTextureID);
         }
         
         glBindVertexArray(texturedCubeVAO);
