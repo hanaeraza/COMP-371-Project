@@ -228,6 +228,7 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
 }
 
 void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint tireText) {
+
     glBindTexture(GL_TEXTURE_2D, carText);
     mat4 car;
     float sizeInc = 1;//make car dif size
