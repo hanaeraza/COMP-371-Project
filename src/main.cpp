@@ -1172,12 +1172,13 @@ GLuint loadCubemap() {
     
     int width, height, nrChannels;
     
-    unsigned char *right = stbi_load(PATH_PREFIX "assets/textures/skybox/px.jpg", &width, &height, &nrChannels, 0);
-    unsigned char *left = stbi_load(PATH_PREFIX "assets/textures/skybox/nx.jpg", &width, &height, &nrChannels, 0);
-    unsigned char *top = stbi_load(PATH_PREFIX "assets/textures/skybox/py.jpg", &width, &height, &nrChannels, 0);
-    unsigned char *bottom = stbi_load(PATH_PREFIX "assets/textures/skybox/ny.jpg", &width, &height, &nrChannels, 0);
-    unsigned char *front = stbi_load(PATH_PREFIX "assets/textures/skybox/pz.jpg", &width, &height, &nrChannels, 0);
-    unsigned char *back = stbi_load(PATH_PREFIX "assets/textures/skybox/nz.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *right = stbi_load(PATH_PREFIX "assets/textures/skybox/right.jpeg", &width, &height, &nrChannels, 0);
+    unsigned char *left = stbi_load(PATH_PREFIX "assets/textures/skybox/left.jpeg", &width, &height, &nrChannels, 0);
+    unsigned char *top = stbi_load(PATH_PREFIX "assets/textures/skybox/top.jpeg", &width, &height, &nrChannels, 0);
+    unsigned char *bottom = stbi_load(PATH_PREFIX "assets/textures/skybox/bottom.jpeg", &width, &height, &nrChannels, 0);
+    unsigned char *front = stbi_load(PATH_PREFIX "assets/textures/skybox/front.jpeg", &width, &height, &nrChannels, 0);
+    unsigned char *back = stbi_load(PATH_PREFIX "assets/textures/skybox/back.jpeg", &width, &height, &nrChannels, 0);
+    
     if (right) {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
                      0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, right
