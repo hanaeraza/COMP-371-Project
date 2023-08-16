@@ -17,6 +17,7 @@
 float rotX = 0.0f;
 int camNum = 3;
 bool carLight = false;
+int skyNum = 1;
 
 struct WorldChunk;
 map<int, WorldChunk> chunksByPosition; // Will hold all previous chunk position information for history
@@ -394,7 +395,7 @@ int main(int argc, char *argv[]) {
     GLuint carTextureID = loadTexture(PATH_PREFIX "assets/textures/car.jpg");
     GLuint tireTextureID = loadTexture(PATH_PREFIX "assets/textures/tire.jpg");
     
-    vector<std::string> skyFaces {
+    vector<std::string> skyFaces1 {
             PATH_PREFIX "assets/textures/skybox/right.jpeg",  // right
             PATH_PREFIX "assets/textures/skybox/left.jpeg",  // left
             PATH_PREFIX "assets/textures/skybox/top.jpeg",  // top
@@ -402,8 +403,44 @@ int main(int argc, char *argv[]) {
             PATH_PREFIX "assets/textures/skybox/front.jpeg",  // front
             PATH_PREFIX "assets/textures/skybox/back.jpeg"   // back
     };
-    GLuint cubemapTexture = loadCubemap(skyFaces);
-    
+    vector<std::string> skyFaces2 {
+            PATH_PREFIX "assets/textures/skybox/right2.jpg",  // right
+            PATH_PREFIX "assets/textures/skybox/left2.jpg",  // left
+            PATH_PREFIX "assets/textures/skybox/top2.jpg",  // top
+            PATH_PREFIX "assets/textures/skybox/bottom2.jpg",  // bottom
+            PATH_PREFIX "assets/textures/skybox/front2.jpg",  // front
+            PATH_PREFIX "assets/textures/skybox/back2.jpg"   // back
+    };
+    vector<std::string> skyFaces3 {
+            PATH_PREFIX "assets/textures/skybox/right3.jpg",  // right
+            PATH_PREFIX "assets/textures/skybox/left3.jpg",  // left
+            PATH_PREFIX "assets/textures/skybox/top3.jpg",  // top
+            PATH_PREFIX "assets/textures/skybox/bottom3.jpg",  // bottom
+            PATH_PREFIX "assets/textures/skybox/front3.jpg",  // front
+            PATH_PREFIX "assets/textures/skybox/back3.jpg"   // back
+    };
+    vector<std::string> skyFaces4 {
+            PATH_PREFIX "assets/textures/skybox/right4.jpg",  // right
+            PATH_PREFIX "assets/textures/skybox/left4.jpg",  // left
+            PATH_PREFIX "assets/textures/skybox/top4.jpg",  // top
+            PATH_PREFIX "assets/textures/skybox/bottom4.jpg",  // bottom
+            PATH_PREFIX "assets/textures/skybox/front4.jpg",  // front
+            PATH_PREFIX "assets/textures/skybox/back4.jpg"   // back
+    };
+    vector<std::string> skyFaces5 {
+            PATH_PREFIX "assets/textures/skybox/right5.jpg",  // right
+            PATH_PREFIX "assets/textures/skybox/left5.jpg",  // left
+            PATH_PREFIX "assets/textures/skybox/top5.jpg",  // top
+            PATH_PREFIX "assets/textures/skybox/bottom5.jpg",  // bottom
+            PATH_PREFIX "assets/textures/skybox/front5.jpg",  // front
+            PATH_PREFIX "assets/textures/skybox/back5.jpg"   // back
+    };
+
+    GLuint cubemapTexture1 = loadCubemap(skyFaces1);
+    GLuint cubemapTexture2 = loadCubemap(skyFaces2);
+    GLuint cubemapTexture3 = loadCubemap(skyFaces3);
+    GLuint cubemapTexture4 = loadCubemap(skyFaces4);
+    GLuint cubemapTexture5 = loadCubemap(skyFaces5);
     glUseProgram(shaderSkybox);
     vec3 lightColor = vec3(1.0f, 1.0f, 1.0f); // Used for both the scene shader and the skybox shader
     SetUniformVec3(shaderSkybox, "lightColor", lightColor);
@@ -534,11 +571,27 @@ int main(int argc, char *argv[]) {
     int previousTstate = GLFW_RELEASE;
     int previousZstate = GLFW_RELEASE;
     int previousLstate = GLFW_RELEASE;
+    int previous1state = GLFW_RELEASE;
     int lastCState = GLFW_RELEASE;
     int lastMouseLeftState = GLFW_RELEASE;
-    
+
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
+        if (skyNum == 1) {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture1);
+        } else if (skyNum == 2){
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture2);
+        }
+        else if (skyNum == 3) {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture3);
+        }
+        else if (skyNum == 4) {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture4);
+        }
+        else {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture5);
+        }
+
         // Frame time calculation
         float dt = glfwGetTime() - lastFrameTime;
         lastFrameTime += dt;
@@ -758,7 +811,6 @@ int main(int argc, char *argv[]) {
         
         glDepthFunc(GL_LEQUAL); // Change depth function so that the skybox's maximmum depth value gets rendered
         glBindVertexArray(skyboxVAO);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glDepthFunc(GL_LESS); // Back to default
         
@@ -805,7 +857,15 @@ int main(int argc, char *argv[]) {
                 carLight = !carLight;
             }
             previousLstate = glfwGetKey(window, GLFW_KEY_L);
-            
+
+            // Toggle SkyBoxes
+            if (previous1state == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+                skyNum +=1;
+                if(skyNum>=6){skyNum=1;}
+            }
+            previous1state = glfwGetKey(window, GLFW_KEY_1);
+
+
             double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
