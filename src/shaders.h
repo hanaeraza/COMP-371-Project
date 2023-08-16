@@ -9,7 +9,7 @@
 using namespace glm;
 using namespace std;
 
-const char *SCENE_VERT = "#version 330 core\n"
+inline const char *SCENE_VERT = "#version 330 core\n"
                          "\n"
                          "uniform vec3 view_position;\n"
                          "\n"
@@ -36,7 +36,7 @@ const char *SCENE_VERT = "#version 330 core\n"
                          "    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);\n"
                          "}";
 
-const char *SCENE_FRAG = "#version 330 core\n"
+inline const char *SCENE_FRAG = "#version 330 core\n"
                          "\n"
                          "const float PI = 3.1415926535897932384626433832795;\n"
                          "\n"
@@ -166,7 +166,7 @@ const char *SCENE_FRAG = "#version 330 core\n"
                          "}\n"
                          "";
 
-const char *SKYBOX_VERT = "#version 330 core\n"
+inline const char *SKYBOX_VERT = "#version 330 core\n"
                           "\n"
                           "layout (location = 0) in vec3 position;\n"
                           "\n"
@@ -186,7 +186,7 @@ const char *SKYBOX_VERT = "#version 330 core\n"
                           "    gl_Position = pos.xyww;\n"
                           "}";
 
-const char *SKYBOX_FRAG = "#version 330 core\n"
+inline const char *SKYBOX_FRAG = "#version 330 core\n"
                           "\n"
                           "out vec4 fragColor;\n"
                           "\n"
@@ -203,7 +203,7 @@ const char *SKYBOX_FRAG = "#version 330 core\n"
                           "    fragColor = vec4(ambientColor, 1.0f);\n"
                           "}";
 
-const char *SHADOW_VERT = "#version 330 core\n"
+inline const char *SHADOW_VERT = "#version 330 core\n"
                           "layout (location = 0) in vec3 position;\n"
                           "\n"
                           "uniform mat4 light_view_proj_matrix;\n"
@@ -220,7 +220,7 @@ const char *SHADOW_VERT = "#version 330 core\n"
                           "                    light_view_proj_matrix * model_matrix * vec4(position, 1.0);\n"
                           "}";
 
-const char *SHADOW_FRAG = "#version 330 core\n"
+inline const char *SHADOW_FRAG = "#version 330 core\n"
                           "\n"
                           "out vec4 FragColor;\n"
                           "\n"
@@ -234,7 +234,7 @@ const char *SHADOW_FRAG = "#version 330 core\n"
                           "}";
 
 // Returns shader program ID
-int compileAndLinkShaders(const char *vertexShaderSrc, const char *fragmentShaderSrc) {
+inline int compileAndLinkShaders(const char *vertexShaderSrc, const char *fragmentShaderSrc) {
     
     // Vertex shader
     int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -282,43 +282,43 @@ int compileAndLinkShaders(const char *vertexShaderSrc, const char *fragmentShade
 }
 
 // shader variable setters
-void SetUniformMat4(GLuint shader_id, const char *uniform_name, mat4 uniform_value) {
+inline void SetUniformMat4(GLuint shader_id, const char *uniform_name, mat4 uniform_value) {
     glUseProgram(shader_id);
     glUniformMatrix4fv(glGetUniformLocation(shader_id, uniform_name), 1, GL_FALSE, &uniform_value[0][0]);
 }
 
-void SetUniformVec3(GLuint shader_id, const char *uniform_name, vec3 uniform_value) {
+inline void SetUniformVec3(GLuint shader_id, const char *uniform_name, vec3 uniform_value) {
     glUseProgram(shader_id);
     glUniform3fv(glGetUniformLocation(shader_id, uniform_name), 1, value_ptr(uniform_value));
 }
 
 template<class T>
-void SetUniform1Value(GLuint shader_id, const char *uniform_name, T uniform_value) {
+inline void SetUniform1Value(GLuint shader_id, const char *uniform_name, T uniform_value) {
     glUseProgram(shader_id);
     glUniform1i(glGetUniformLocation(shader_id, uniform_name), uniform_value);
     glUseProgram(0);
 }
 
 template<class T>
-void SetUniform1fValue(GLuint shader_id, const char *uniform_name, T uniform_value) {
+inline void SetUniform1fValue(GLuint shader_id, const char *uniform_name, T uniform_value) {
     glUseProgram(shader_id);
     glUniform1f(glGetUniformLocation(shader_id, uniform_name), uniform_value);
     glUseProgram(0);
 }
 
-void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix) {
+inline void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix) {
     glUseProgram(shaderProgram);
     GLint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projection_matrix");
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
 }
 
-void setViewMatrix(int shaderProgram, mat4 viewMatrix) {
+inline void setViewMatrix(int shaderProgram, mat4 viewMatrix) {
     glUseProgram(shaderProgram);
     GLint viewMatrixLocation = glGetUniformLocation(shaderProgram, "view_matrix");
     glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
 }
 
-void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
+inline void setWorldMatrix(int shaderProgram, mat4 _worldMatrix) {
     glUseProgram(shaderProgram);
     GLint worldMatrixLocation = glGetUniformLocation(shaderProgram, "model_matrix");
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &_worldMatrix[0][0]);
