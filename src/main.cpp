@@ -35,7 +35,7 @@ GLuint createSkyboxObject();
 
 void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
                  GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
-                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove);
+                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove, const mat4 &carTransform);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -227,147 +227,146 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
     }
 }
 
-void drawCar(GLuint shader_id, int vaos, vec3 carMove, GLuint carText, GLuint tireText) {
+void drawCar(GLuint shader_id, const mat4 &grpMatrix, int vaos, vec3 carMove, GLuint carText,
+             GLuint tireText) {
     glBindTexture(GL_TEXTURE_2D, carText);
     mat4 car;
     float sizeInc = 1;//make car dif size
-    mat4 reposition = translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f));//position car in scene
     
-    mat4 body = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 1.0f, -5.0f + carMove.z)) *
-                scale(mat4(1.0f), sizeInc * vec3(4.0f, 1.5f, 8.0f));
-    car = reposition * body;
+    mat4 body = scale(mat4(1.0f), vec3(4.0f, 1.5f, 8.0f));
+    car = grpMatrix * body;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 light1 = translate(mat4(1.0f), sizeInc * vec3(1 + carMove.x, 1.0f, -9.0f + carMove.z)) *
-                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.1f));
-    car = reposition * light1;
+    mat4 light1 = translate(mat4(1.0f), vec3(-1.25, 0.0f, -4.0f)) *
+            scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.1f));
+    car = grpMatrix * light1;
     SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 light2 = translate(mat4(1.0f), sizeInc * vec3(3.5f + carMove.x, 1.0f, -9.0f + carMove.z)) *
-                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.1f));
-    car = reposition * light2;
+    mat4 light2 = translate(mat4(1.0f), vec3(1.25f, 0.0f, -4.0f)) *
+            scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.1f));
+    car = grpMatrix * light2;
     SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 2.5, -3 + carMove.z)) *
-                 scale(mat4(1.0f), sizeInc * vec3(0.1f, 1.75, 3));
-    car = reposition * side1;
+    mat4 side1 = translate(mat4(1.0f), vec3(-1.5f, 1.5, 2)) *
+            scale(mat4(1.0f), vec3(0.1f, 1.75, 3));
+    car = grpMatrix * side1;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1_2 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 3.23, -6 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
-    car = reposition * side1_2;
+    mat4 side1_2 = translate(mat4(1.0f), vec3(-1.5f, 2.23, -1)) *
+            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+    car = grpMatrix * side1_2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1_3 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 1.75, -6 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
-    car = reposition * side1_3;
+    mat4 side1_3 = translate(mat4(1.0f), vec3(-1.5f, 0.75, -1)) *
+            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+    car = grpMatrix * side1_3;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side1_4 = translate(mat4(1.0f), sizeInc * vec3(0.75f + carMove.x, 2.5, -7 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(0.15f, 1.3, 1));
-    car = reposition * side1_4;
+    mat4 side1_4 = translate(mat4(1.0f), vec3(-1.5f, 1.5, -2)) *
+            scale(mat4(1.0f), vec3(0.15f, 1.3, 1));
+    car = grpMatrix * side1_4;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 2.5, -3 + carMove.z)) *
-                 scale(mat4(1.0f), sizeInc * vec3(0.1f, 1.75, 3));
-    car = reposition * side2;
+    mat4 side2 = translate(mat4(1.0f), vec3(1.5f, 1.5, 2)) *
+            scale(mat4(1.0f), vec3(0.1f, 1.75, 3));
+    car = grpMatrix * side2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2_2 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 3.23, -6 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
-    car = reposition * side2_2;
+    mat4 side2_2 = translate(mat4(1.0f), vec3(1.5f, 2.23, -1)) *
+            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+    car = grpMatrix * side2_2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2_3 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 1.75, -6 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(0.1f, 0.3, 3));
-    car = reposition * side2_3;
+    mat4 side2_3 = translate(mat4(1.0f), vec3(1.5f, 0.75, -1)) *
+            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+    car = grpMatrix * side2_3;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 side2_4 = translate(mat4(1.0f), sizeInc * vec3(3.75f + carMove.x, 2.5, -7 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(0.15f, 1.3, 1));
-    car = reposition * side2_4;
+    mat4 side2_4 = translate(mat4(1.0f), vec3(1.5f, 1.5, -2)) *
+            scale(mat4(1.0f), vec3(0.15f, 1.3, 1));
+    car = grpMatrix * side2_4;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 window1 = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 1.75, -7.5 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(3, 0.3, 0.1f));
-    car = reposition * window1;
+    mat4 window1 = translate(mat4(1.0f), vec3(0.0f, 0.75, -2.5)) *
+            scale(mat4(1.0f), vec3(3, 0.3, 0.1f));
+    car = grpMatrix * window1;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 window2 = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 3.25, -7.5 + carMove.z)) *
-                   scale(mat4(1.0f), sizeInc * vec3(3, 0.3, 0.1f));
-    car = reposition * window2;
+    mat4 window2 = translate(mat4(1.0f), vec3(0.0f, 2.25, -2.5)) *
+            scale(mat4(1.0f), vec3(3, 0.3, 0.1f));
+    car = grpMatrix * window2;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 back = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 2.5, -1.5 + carMove.z)) *
-                scale(mat4(1.0f), sizeInc * vec3(3, 1.75, 0.1f));
-    car = reposition * back;
+    mat4 back = translate(mat4(1.0f), vec3(0.0f, 1.5, 3.5)) *
+            scale(mat4(1.0f), vec3(3, 1.75, 0.1f));
+    car = grpMatrix * back;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 top = translate(mat4(1.0f), sizeInc * vec3(2.25f + carMove.x, 3.4, -4.5 + carMove.z)) *
-               scale(mat4(1.0f), sizeInc * vec3(3, 0.1, 6.0f));
-    car = reposition * top;
+    mat4 top = translate(mat4(1.0f), vec3(0.0f, 2.4, 0.5)) *
+            scale(mat4(1.0f), vec3(3, 0.1, 6.0f));
+    car = grpMatrix * top;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 1));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     glBindTexture(GL_TEXTURE_2D, tireText);
     glBindVertexArray(vaos);
-    mat4 wheel1 = translate(mat4(1.0f), sizeInc * vec3(4.5f + carMove.x, 0.5f, -7.0f + carMove.z)) *
-                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
-                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
-    car = reposition * wheel1;
+    mat4 wheel1 = translate(mat4(1.0f), vec3(2.25f, -0.5f, -2.0f)) *
+            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
+    car = grpMatrix * wheel1;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel2 = translate(mat4(1.0f), sizeInc * vec3(4.5f + carMove.x, 0.5f, -3.0f + carMove.z)) *
-                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
-                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
-    car = reposition * wheel2;
+    mat4 wheel2 = translate(mat4(1.0f), vec3(2.25f, -0.5f, 2.0f)) *
+            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
+    car = grpMatrix *wheel2;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel3 = translate(mat4(1.0f), sizeInc * vec3(0 + carMove.x, 0.5f, -7.0f + carMove.z)) *
-                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
-                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
-    car = reposition * wheel3;
+    mat4 wheel3 = translate(mat4(1.0f), vec3(-2.25, -0.5f, -2.0f))  *
+            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
+    car = grpMatrix *wheel3;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel4 = translate(mat4(1.0f), sizeInc * vec3(0 + carMove.x, 0.5f, -3.0f + carMove.z)) *
-                  rotate(mat4(1.0f), radians(rotX), sizeInc * vec3(1, 0, 0)) *
-                  scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.0f, 1.0f));
-    car = reposition * wheel4;
+    mat4 wheel4 = translate(mat4(1.0f), vec3(-2.25, -0.5f, 2.0f)) *
+            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
+    car = grpMatrix * wheel4;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
@@ -536,6 +535,11 @@ int main(int argc, char *argv[]) {
     int lastCState = GLFW_RELEASE;
     int lastMouseLeftState = GLFW_RELEASE;
     
+    float angle = 0.0f;
+    mat4 carTransform =
+            translate(mat4(1.0f), vec3(carMove.x, 0.0f, carMove.z)) * translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f)) *translate(mat4(1.0f), vec3(2.25f, 1.0f, -5.0f)) *
+                    rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f));
+    
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
         // Frame time calculation
@@ -550,6 +554,9 @@ int main(int argc, char *argv[]) {
         
         setProjectionMatrix(shaderScene, projectionMatrix);
         
+        carTransform = translate(mat4(1.0f), vec3(carMove.x, 0.0f, carMove.z)) *translate(mat4(1.0f), vec3(2.25f, 1.0f, -5.0f)) *
+                translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f)) *
+                       rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f));  // Resize
         
         // light parameters
         vec3 lightPosition = vec3(carMove.x, 1.0f, carMove.z + 1.5f); // the location of the light in 3D space
@@ -702,7 +709,7 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderShadow, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
-                        leavesTextureID, carTextureID, tireTextureID, carMove);
+                        leavesTextureID, carTextureID, tireTextureID, carMove, carTransform);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -741,7 +748,7 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
-                        leavesTextureID, carTextureID, tireTextureID, carMove);
+                        leavesTextureID, carTextureID, tireTextureID, carMove, carTransform);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -1526,7 +1533,7 @@ int lastChunkID = -100;
 
 void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
                  GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
-                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove) {
+                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove, const mat4 &carTransform) {
     
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
@@ -1576,5 +1583,5 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         glBindVertexArray(texturedCubeVAO);
     }
     
-    drawCar(shader, sphereVAO, carMove, carTextureID, tireTextureID);
+    drawCar(shader, carTransform, sphereVAO, carMove, carTextureID, tireTextureID);
 }
