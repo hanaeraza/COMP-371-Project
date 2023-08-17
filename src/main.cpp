@@ -40,26 +40,12 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
                  const mat4 &carTransform);
 
 // Translation keyboard input variables
-vec3 position(0.0f);
-float rotation = 0.0f;
-vec3 rotationAngle = vec3(0.0f, 1.0f, 0.0f);
-vec3 scaling(1.0f);
 float fov = 70.0f;
-// Hierarchical Modeling
 
-mat4 partMatrix = scale(mat4(1.0f), vec3(-1.0f, 1.0f, 1.0f));
-mat4 groupMatrix = translate(mat4(1.0f), vec3(0.0f + position.x, 0.0f + position.y, 0.0f + position.z)) *
-                   scale(mat4(1.0f), vec3(0.1f + scaling.x, 0.1f + scaling.y, 0.1f + scaling.z)) *
-                   rotate(mat4(1.0f), radians(0.0f + rotation), vec3(0.0f, 1.0f, 0.0f));
-mat4 worldMatrix = groupMatrix * partMatrix;
+mat4 worldMatrix = mat4(1.0f);
 
 // window dimensions
 const GLuint WIDTH = 1024, HEIGHT = 768;
-
-GLuint setupModelVBO(string path, int &vertexCount);
-
-//Sets up a model using an Element Buffer Object to refer to vertex data
-GLuint setupModelEBO(string path, int &vertexCount);
 
 GLFWwindow *window = nullptr;
 
@@ -577,9 +563,7 @@ int main(int argc, char *argv[]) {
     glUniform1i(shadowMapLocation, 1);
     
     // Camera parameters for view transform
-    // The perfomance slows when cameraPos holds negative values, hence why it's fairly big
     vec3 cameraPosition(0.6f, 10.0f, 0.0f);
-    vec3 cameraPositionWalking(0.6f, 3.0f, 0.0f);
     vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
     vec3 carMove(0, 0, 20.0f);
@@ -786,13 +770,6 @@ int main(int argc, char *argv[]) {
         // Set view position on scene shader
         SetUniformVec3(shaderScene, "view_position", cameraPosition);
         
-        partMatrix = scale(mat4(1.0f), vec3(-1.0f, 1.0f, 1.0f));
-        groupMatrix = translate(mat4(1.0f), vec3(0.0f + position.x, 0.0f + position.y, 0.0f + position.z)) *
-                      scale(mat4(1.0f), vec3(0.1f + scaling.x, 0.1f + scaling.y, 0.1f + scaling.z)) *
-                      rotate(mat4(1.0f), radians(0.0f + rotation), vec3(0.0f, 1.0f, 0.0f));
-        worldMatrix = groupMatrix * partMatrix;
-        
-        
         // Render shadow in 2 passes: 1- Render depth map, 2- Render scene
         // 1- Render shadow map:
         // a- use program for shadows
@@ -968,63 +945,15 @@ int main(int argc, char *argv[]) {
                 fov -= 1.0f;
             }
             
-            
-            if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) // scale object up
-            {
-                scaling.x += 0.1f;
-                scaling.y += 0.1f;
-                scaling.z += 0.1f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) // scale object down
-            {
-                scaling.x -= 0.1f;
-                scaling.y -= 0.1f;
-                scaling.z -= 0.1f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move object to the left
-            {
+            // Rotate car left
+            if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
                 carAngle += 1.0f;
                 
             }
             
-            if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move object to the right
-            {
+            // Rotate car right
+            if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
                 carAngle -= 1.0f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move object down
-            {
-                position.y -= 0.1f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move object up
-            {
-                position.y += 0.1f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate object to the left
-            {
-                rotation += 5.0f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate object to the right
-            {
-                rotation -= 5.0f;
-            }
-            
-            if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) // reset object back to origin
-            {
-                position.x = 0.0f;
-                position.y = 0.0f;
-                position.z = 0.0f;
-                
-                scaling.x = 1.0f;
-                scaling.y = 1.0f;
-                scaling.z = 1.0f;
-                rotation = 0.0f;
-                
             }
             
             if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) // zoom out
@@ -1053,156 +982,92 @@ int main(int argc, char *argv[]) {
             }
             lastCState = glfwGetKey(window, GLFW_KEY_C);
             
-            // Free camera, default
-            if (selection == 0) {
-                
-                cameraPosition = cameraPositionWalking;
-                
-                bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                               glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-                float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
-                
-                glfwGetCursorPos(window, &mousePosX, &mousePosY);
-                
-                dx = mousePosX - lastMousePosX;
-                dy = mousePosY - lastMousePosY;
-                
-                lastMousePosX = mousePosX;
-                lastMousePosY = mousePosY;
-                
-                // Convert to spherical coordinates
-                cameraHorizontalAngle -= dx * cameraAngularSpeed;
-                cameraVerticalAngle -= dy * cameraAngularSpeed;
-                
-                // Clamp vertical angle to [-85, 85] degrees
-                cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
-                if (cameraHorizontalAngle > 360) {
-                    cameraHorizontalAngle -= 360;
-                } else if (cameraHorizontalAngle < -360) {
-                    cameraHorizontalAngle += 360;
-                }
-                
-                theta = radians(cameraHorizontalAngle);
-                phi = radians(cameraVerticalAngle);
-                
-                cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-                vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
-                
-                glm::normalize(cameraSideVector);
-                
-                if (camNum == 1) { cameraPosition = vec3(0.0f + carMove.x, 3.0f, 0.0f + carMove.z); }
-                else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
-                else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
-                else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
-                
-                
-                if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
-                {
-                    cameraPosition -= cameraSideVector * currentCameraSpeed;
-                    
-                    carMove -= cameraSideVector * currentCameraSpeed;
-                }
-                
-                if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
-                {
-                    cameraPosition += cameraSideVector * currentCameraSpeed;
-                    
-                    carMove += cameraSideVector * currentCameraSpeed;
-                }
-                
-                if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
-                {
-                    vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
-                    cameraPosition -= moveDirection * currentCameraSpeed;
-                    
-                    carMove -= moveDirection * currentCameraSpeed;
-                    
-                    rotX -= 5.0f; // Car wheels rotation
-                }
-                
-                if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
-                {
-                    vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
-                    cameraPosition += moveDirection * currentCameraSpeed;
-                    
-                    carMove += moveDirection * currentCameraSpeed;
-                    
-                    rotX += 5.0f; // Car wheels rotation
-                    
-                    cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
-                }
-                
-                // walking boundaries
-                if (cameraPosition.x > 2.0f)
-                    cameraPosition.x = 2.0f;
-                if (cameraPosition.x < -2.0f)
-                    cameraPosition.x = -2.0f;
-                if (carMove.x > 2.0f)
-                    carMove.x = 2.0f;
-                if (carMove.x < -2.0f)
-                    carMove.x = -2.0f;
-                
-                
-                viewMatrix = mat4(1.0);
-                
-                if (cameraFirstPerson) {
-                    viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-                } else {
-                    float radius = 5.0f;
-                    position = cameraPosition - radius * cameraLookAt;
-                    viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
-                }
-                
-                // Keep track of walking position for when camera is changed to birds eye
-                cameraPositionWalking = cameraPosition;
+            // Camera movement pre-calculations
+            bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                           glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+            float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
+            
+            glfwGetCursorPos(window, &mousePosX, &mousePosY);
+            
+            dx = mousePosX - lastMousePosX;
+            dy = mousePosY - lastMousePosY;
+            
+            lastMousePosX = mousePosX;
+            lastMousePosY = mousePosY;
+            
+            // Convert to spherical coordinates
+            cameraHorizontalAngle -= dx * cameraAngularSpeed;
+            cameraVerticalAngle -= dy * cameraAngularSpeed;
+            
+            // Clamp vertical angle to [-85, 85] degrees
+            cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
+            if (cameraHorizontalAngle > 360) {
+                cameraHorizontalAngle -= 360;
+            } else if (cameraHorizontalAngle < -360) {
+                cameraHorizontalAngle += 360;
             }
-            // Birds eye camera
-            if (selection == 1) {
+            
+            theta = radians(cameraHorizontalAngle);
+            phi = radians(cameraVerticalAngle);
+            
+            cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
+            vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
+            
+            glm::normalize(cameraSideVector);
+            
+            if (camNum == 1) { cameraPosition = vec3(0.0f + carMove.x, 3.0f, 0.0f + carMove.z); }
+            else if (camNum == 2) { cameraPosition = vec3(0.0f + carMove.x, 3.25f, 5.25f + carMove.z); }
+            else if (camNum == 3) { cameraPosition = vec3(0.0f + carMove.x, 8.0f, 20.0f + carMove.z); }
+            else if (camNum == 4) { cameraPosition = vec3(0.0f + carMove.x, 30.0f, 20.0f + carMove.z); }
+            
+            
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
+            {
+                cameraPosition -= cameraSideVector * currentCameraSpeed;
                 
-                cameraPosition = vec3(0.6f, 10.0f, 10.0f);
-                
-                bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                               glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-                float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
-                
-                glfwGetCursorPos(window, &mousePosX, &mousePosY);
-                
-                dx = mousePosX - lastMousePosX;
-                dy = mousePosY - lastMousePosY;
-                
-                lastMousePosX = mousePosX;
-                lastMousePosY = mousePosY;
-                
-                // Convert to spherical coordinates
-                cameraHorizontalAngle -= dx * cameraAngularSpeed;
-                cameraVerticalAngle -= dy * cameraAngularSpeed;
-                
-                // Clamp vertical angle to [-85, 85] degrees
-                cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
-                if (cameraHorizontalAngle > 360) {
-                    cameraHorizontalAngle -= 360;
-                } else if (cameraHorizontalAngle < -360) {
-                    cameraHorizontalAngle += 360;
-                }
-                
-                theta = radians(cameraHorizontalAngle);
-                phi = radians(cameraVerticalAngle);
-                
-                cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-                vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
-                
-                glm::normalize(cameraSideVector);
-                
-                viewMatrix = mat4(1.0);
-                
-                if (cameraFirstPerson) {
-                    viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-                } else {
-                    float radius = 5.0f;
-                    position = cameraPosition - radius * cameraLookAt;
-                    viewMatrix = lookAt(position, position + cameraLookAt, cameraUp);
-                }
+                carMove -= cameraSideVector * currentCameraSpeed;
             }
+            
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // move camera to the right
+            {
+                cameraPosition += cameraSideVector * currentCameraSpeed;
+                
+                carMove += cameraSideVector * currentCameraSpeed;
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
+            {
+                vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
+                cameraPosition -= moveDirection * currentCameraSpeed;
+                
+                carMove -= moveDirection * currentCameraSpeed;
+                
+                rotX -= 5.0f; // Car wheels rotation
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
+            {
+                vec3 moveDirection = vec3(cameraLookAt.x, 0.0f, cameraLookAt.z);
+                cameraPosition += moveDirection * currentCameraSpeed;
+                
+                carMove += moveDirection * currentCameraSpeed;
+                
+                rotX += 5.0f; // Car wheels rotation
+                
+                cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
+            }
+            
+            // Driving boundaries
+            if (cameraPosition.x > 2.0f)
+                cameraPosition.x = 2.0f;
+            if (cameraPosition.x < -2.0f)
+                cameraPosition.x = -2.0f;
+            if (carMove.x > 2.0f)
+                carMove.x = 2.0f;
+            if (carMove.x < -2.0f)
+                carMove.x = -2.0f;
+            
+            
         }
         
     }
