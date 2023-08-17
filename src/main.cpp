@@ -1134,6 +1134,8 @@ int main(int argc, char *argv[]) {
                     carMove += moveDirection * currentCameraSpeed;
                     
                     rotX += 5.0f; // Car wheels rotation
+                    
+                    cout << "cameraPos.z: " << cameraPosition.z << "\t Change in time: " << dt << "\n";
                 }
                 
                 // walking boundaries
@@ -1442,8 +1444,8 @@ GLuint createSphereObject() {
     std::vector<unsigned int> indices;
     std::vector<glm::vec3> colors;
     
-    const unsigned int X_SEGMENTS = 64;
-    const unsigned int Y_SEGMENTS = 64;
+    const unsigned int X_SEGMENTS = 10;
+    const unsigned int Y_SEGMENTS = 10;
     const float PI = 3.14159265359;
     for (unsigned int y = 0; y <= Y_SEGMENTS; ++y) {
         for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
