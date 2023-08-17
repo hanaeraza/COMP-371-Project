@@ -265,13 +265,13 @@ void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 c
     glBindTexture(GL_TEXTURE_2D, eyeTex);
     
     glBindVertexArray(vaos);
-    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, 0.8f))* rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc*vec3(0.3f, 0.3f, 0.3f));
+    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, 0.7f))* rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc*vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye1;
     SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, -0.8f ))* rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc* vec3(0.3f, 0.3f, 0.3f));
+    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, -0.7f ))* rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc* vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye2;
     SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", rabbit);
