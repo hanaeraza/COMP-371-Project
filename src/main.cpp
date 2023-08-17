@@ -566,11 +566,11 @@ int main(int argc, char *argv[]) {
     
     // Camera parameters for view transform
     // The perfomance slows when cameraPos holds negative values, hence why it's fairly big
-    vec3 cameraPosition(0.6f, 10.0f, 2000.0f);
-    vec3 cameraPositionWalking(0.6f, 3.0f, 2000.0f);
+    vec3 cameraPosition(0.6f, 10.0f, 0.0f);
+    vec3 cameraPositionWalking(0.6f, 3.0f, 0.0f);
     vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
-    vec3 carMove(0, 0, 1980.0f);
+    vec3 carMove(0, 0, 20.0f);
     
     // Other camera parameters
     float cameraSpeed = 0.1f;
