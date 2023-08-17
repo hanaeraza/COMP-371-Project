@@ -601,8 +601,8 @@ int main(int argc, char *argv[]) {
     SetUniformMat4(shaderScene, "view_matrix", viewMatrix);
     
     
-    float lightAngleOuter = 45.0;
-    float lightAngleInner = 35.0;
+    float lightAngleOuter = 25.0;
+    float lightAngleInner = 20.0;
     // Set light cutoff angles on scene shader
     SetUniform1fValue(shaderScene, "light_cutoff_inner", cos(radians(lightAngleInner)));
     SetUniform1fValue(shaderScene, "light_cutoff_outer", cos(radians(lightAngleOuter)));
@@ -664,39 +664,32 @@ int main(int argc, char *argv[]) {
                                             0.5f, 250.0f);    // near and far planes
         setProjectionMatrix(shaderScene, projectionMatrix);
         
-        carTransform = translate(mat4(1.0f), vec3(carMove.x, 0.0f, carMove.z)) *translate(mat4(1.0f), vec3(2.25f, 1.0f, -5.0f)) *
-                translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f)) *
-                       rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f));  // Resize
+        // This matrix is applied to all car parts and the car's headlights (light position, focus & direction)
+        mat4 carTransform = translate(mat4(1.0f), vec3(carMove.x, 1.2f, carMove.z + 5)) *
+                       rotate(mat4(1.0f), radians(carAngle), vec3(0.0f, 1.0f, 0.0f));
         
-        // light parameters
-        vec3 lightPosition = vec3(carMove.x, 1.0f, carMove.z + 1.5f); // the location of the light in 3D space
-        vec3 lightFocus(0.0, 0.0, -1.0);      // the point in 3D space the light "looks" at
-        vec3 lightDirection = normalize(lightFocus - lightPosition);
+        // Apply the car's translation & rotation to the light position
+        vec3 lightPosition = vec3(carTransform * vec4(vec3(0.0f, -0.5f, -3.5f), 1.0f));
         
-        float lightNearPlane = 1.0f;
-        float lightFarPlane = 200.0f;
+        // Apply the car's rotation to the light direction
+        vec3 lightDirection = normalize(mat3(carTransform) * vec3(0.0f, 0.1f, -1.0f));
+        
+        float lightNearPlane = 0.6f;
+        float lightFarPlane = 100.0f;
         
         mat4 lightProjectionMatrix = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane, lightFarPlane);
-//                perspective(20.0f, (float) DEPTH_MAP_TEXTURE_SIZE / (float) DEPTH_MAP_TEXTURE_SIZE, lightNearPlane,
-//                            lightFarPlane);
-        mat4 lightViewMatrix = lookAt(lightPosition, lightFocus, vec3(0.0f, 1.0f, 0.0f));
+        mat4 lightViewMatrix = lookAt(lightPosition, lightDirection + lightPosition, vec3(0.0f, 1.0f, 0.0f));
         mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
         
-        // Set light space matrix on both shaders
+        // Set uniforms for the main headlights
+        SetUniformVec3(shaderScene, "light_position", lightPosition);
+        SetUniformVec3(shaderScene, "light_direction", lightDirection);
         SetUniformMat4(shaderShadow, "light_view_proj_matrix", lightSpaceMatrix);
         SetUniformMat4(shaderScene, "light_view_proj_matrix", lightSpaceMatrix);
-        
-        // Set light far and near planes on scene shader
         SetUniform1fValue(shaderScene, "light_near_plane", lightNearPlane);
         SetUniform1fValue(shaderScene, "light_far_plane", lightFarPlane);
         
-        // Set light position on scene shader
-        SetUniformVec3(shaderScene, "light_position", lightPosition);
-        
-        // Set light direction on scene shader
-        SetUniformVec3(shaderScene, "light_direction", lightDirection);
-        
-        // Light parameters for point light (light two)
+        // Light parameters for point light (light two) (this light amplifies the headlights)
         vec3 lightPosition2 = vec3(1 + carMove.x, -0, 0.0f + carMove.z); // the location of the light in 3D space
         vec3 lightFocus2(0.0, -1.0, 10.0 + carMove.z);      // the point in 3D space the light "looks" at
         vec3 lightDirection2 = normalize(lightFocus2 - lightPosition2);
@@ -704,18 +697,12 @@ int main(int argc, char *argv[]) {
         float lightNearPlane2 = 0.0f; //1
         float lightFarPlane2 = 15.0f; //180
         
-        mat4 lightProjectionMatrix2 = frustum(-1.0f, 1.0f, -1.0f, 1.0f, lightNearPlane2, lightFarPlane2);
-        mat4 lightViewMatrix2 = lookAt(lightPosition2, lightFocus2, vec3(0.0f, 1.0f, 0.0f));
-        mat4 lightSpaceMatrix2 = lightProjectionMatrix2 * lightViewMatrix2;
-        
         // Set light far and near planes on scene shader
         SetUniform1Value(shaderScene, "light_near_plane2", lightNearPlane2);
         SetUniform1Value(shaderScene, "light_far_plane2", lightFarPlane2);
-        
         SetUniformVec3(shaderScene, "light_position2", lightPosition2); // Set light position on scene shader
         SetUniformVec3(shaderScene, "light_direction2", lightDirection2); // Set light direction on scene shader
-        SetUniform1Value(shaderScene, "useCarLight", carLight);
-        SetUniformVec3(shaderScene, "light_color2", vec3(1.0, 1.0, 1.0)); // Set light color on light shader
+        SetUniformVec3(shaderScene, "light_color2", vec3(1.0, 0.8, 0.5)); // Set light color on light shader
         
         // Night and Day Timer
         SetUniform1fValue(shaderScene, "intensity", intensity); // Set initial intensity
@@ -917,7 +904,8 @@ int main(int argc, char *argv[]) {
             
             // Toggle lights
             if (previousLstate == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-                carLight = !carLight;
+                carLight = !carLight; // Toggle headlights on/off
+                SetUniform1Value(shaderScene, "useCarLight", carLight); // Apply headlights toggle
             }
             previousLstate = glfwGetKey(window, GLFW_KEY_L);
 
@@ -986,13 +974,13 @@ int main(int argc, char *argv[]) {
             
             if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move object to the left
             {
-                position.x -= 0.1f;
+                carAngle += 1.0f;
                 
             }
             
             if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move object to the right
             {
-                position.x += 0.1f;
+                carAngle -= 1.0f;
             }
             
             if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move object down
