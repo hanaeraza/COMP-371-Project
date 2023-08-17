@@ -665,7 +665,7 @@ int main(int argc, char *argv[]) {
         // set projection matrix for fov changes
         projectionMatrix = glm::perspective(radians(fov),            // field of view in degrees
                                             800.0f / 600.0f,  // aspect ratio
-                                            1.0f, 100.0f);   // near and far (near > 0)
+                                            0.5f, 250.0f);   // near and far (near > 0)
         
         setProjectionMatrix(shaderScene, projectionMatrix);
         
