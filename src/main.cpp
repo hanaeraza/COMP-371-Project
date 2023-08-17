@@ -1576,7 +1576,7 @@ struct WorldChunk {
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
-        generateItems(80);
+        generateItems(23, 16, 10, 1);
     };
     
     bool insertItem(PosGenerator itemPos, itemType item) {
@@ -1627,26 +1627,40 @@ struct WorldChunk {
         return true;
     }
     
-    void generateItems(int numOfItems) {
-        while (numOfItems != 0) {
-            // Big trees on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 12.0f, false), BIG_TREE);
-            insertItem(PosGenerator(chunkPositionZ, 12.0f, true), BIG_TREE);
-            
-            // Small trees on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), SMALL_TREE);
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), SMALL_TREE);
-            
-            // Bushes on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, false), BUSH);
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, true), BUSH);
-            
-            // Rabbits on right & left sides
-            insertItem(PosGenerator(chunkPositionZ, 4.0f, false), RABBIT);
-            insertItem(PosGenerator(chunkPositionZ, 4.0f, true), RABBIT);
-            
-            numOfItems -= 8;
+    void generateItems(int maxBigTrees, int maxSmallTrees, int maxBushes, int maxRabbits) {
+        
+        // To toggle between left and right sides of the road
+        // Based on the chunk ID so that the side that gets odd num of items (one extra item) is alternated each chunk
+        bool toggleSide = chunkPositionID % 2 == 0;
+        
+        // Big trees on right & left sides (max because if the position generated overlaps another we discard it)
+        while (maxBigTrees > 0) {
+            toggleSide = !toggleSide;
+            insertItem(PosGenerator(chunkPositionZ, 12.0f, toggleSide), BIG_TREE);
+            --maxBigTrees;
         }
+
+        // Small trees on right & left sides
+        while (maxSmallTrees > 0) {
+            toggleSide = !toggleSide;
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, toggleSide), SMALL_TREE);
+            --maxSmallTrees;
+        }
+
+        // Bushes on right & left sides
+        while (maxBushes > 0) {
+            toggleSide = !toggleSide;
+            insertItem(PosGenerator(chunkPositionZ, 5.0f, toggleSide), BUSH);
+            --maxBushes;
+        }
+
+        // Rabbits on right & left sides
+        while (maxRabbits > 0) {
+            toggleSide = !toggleSide;
+            insertItem(PosGenerator(chunkPositionZ, 4.0f, toggleSide), RABBIT);
+            --maxRabbits;
+        }
+
     }
     
     [[nodiscard]] mat4 getGroundMatrix() const {
