@@ -250,13 +250,13 @@ void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 c
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 ear1 = translate(mat4(1.0f), sizeInc*vec3(1.5f , 3.0f, -0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 3.0f, 0.5f));
+    mat4 ear1 = translate(mat4(1.0f), sizeInc*vec3(1.5f , 3.75f, -0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 1.5f, 0.5f));
     rabbit = reposition * ear1;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 ear2 = translate(mat4(1.0f), sizeInc*vec3(1.5f, 3.0f, 0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 3.0f, 0.5));
+    mat4 ear2 = translate(mat4(1.0f), sizeInc*vec3(1.5f, 3.75f, 0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 1.5f, 0.5));
     rabbit = reposition * ear2;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
@@ -265,13 +265,13 @@ void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 c
     glBindTexture(GL_TEXTURE_2D, eyeTex);
     
     glBindVertexArray(vaos);
-    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f,0.7f))* rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc*vec3(0.3f, 0.3f, 0.3f));
+    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, 0.8f))* rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc*vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye1;
     SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, -0.7f ))* rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc* vec3(0.3f, 0.3f, 0.3f));
+    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, -0.8f ))* rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc* vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye2;
     SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", rabbit);
@@ -665,7 +665,7 @@ int main(int argc, char *argv[]) {
         // set projection matrix for fov changes
         projectionMatrix = glm::perspective(radians(fov),            // field of view in degrees
                                             800.0f / 600.0f,  // aspect ratio
-                                            0.01f, 100.0f);   // near and far (near > 0)
+                                            1.0f, 100.0f);   // near and far (near > 0)
         
         setProjectionMatrix(shaderScene, projectionMatrix);
         
