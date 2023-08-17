@@ -443,7 +443,6 @@ int main(int argc, char *argv[]) {
     GLuint shaderSkybox = compileAndLinkShaders(SKYBOX_VERT, SKYBOX_FRAG);
     
     // Load Textures
-    GLuint bushTextureID = loadTexture(PATH_PREFIX "assets/textures/bush.jpg");
     GLuint leavesTextureID = loadTexture(PATH_PREFIX "assets/textures/leaves.png");
     GLuint woodTextureID = loadTexture(PATH_PREFIX "assets/textures/wood.jpg");
     GLuint roadTextureID = loadTexture(PATH_PREFIX "assets/textures/dirtroad.jpg");
