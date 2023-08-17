@@ -1380,21 +1380,22 @@ GLuint createSphereObject() {
     return sphereVAO;
 }
 
-
 // Generates positions for items to be placed on the ground of a world chunk
-struct PosGenerator {
+class GeneratedItem {
+public:
     
-    float startPositionZ; // The lower z-boundary of the world chunk which the item will be positioned on
-    float x;              // Translation factor on x-axis
-    float z;              // Translation factor on y-axis
-    float itemSize;           // Scaling factor for the widest point of the item
-    float gridSize = 100.0f; // How big the WorldChunk is (in 2D)
-    float roadWidth = 6.0f;  // The width of the road + any additional offset where no objects should be
-    bool leftSide;
+    float x;        // Translation factor on x-axis
+    float z;        // Translation factor on y-axis
+    float itemSize; // Scaling factor for the widest point of the item
+    bool leftSide;  // Whether the item is positioned on left or right side of the road
     
-    PosGenerator(float startPositionZ, float itemSize, bool leftSide = false) : startPositionZ(startPositionZ),
-                                                                                itemSize(itemSize), leftSide(leftSide) {
-        itemSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each tree
+    // The constructor generates position x & z for the item based on the arguments
+    // float startPositionZ : The lower z-boundary of the world chunk which the item will be positioned on
+    // float gridSize       : The width of the WorldChunk
+    // float roadWidth      : The width of the road + any additional offset where no objects should be
+    GeneratedItem(float startPositionZ, float itemSize, bool leftSide = false, float gridSize = 100.0f,
+                  float roadWidth = 6.0f) : itemSize(itemSize), leftSide(leftSide) {
+        itemSize += 1.0f; // The 'size' is increased so that there is a bit of empty space between each item
         
         float startPositionY = (itemSize / 2.0f) + (leftSide ? -gridSize / 2.0f : roadWidth / 2.0f);
         float endPositionY = -(itemSize / 2.0f) + (leftSide ? -roadWidth / 2.0f : gridSize / 2.0f);
@@ -1411,20 +1412,95 @@ struct PosGenerator {
         z = zDistribution(generator);
     };
     
+    GeneratedItem(const GeneratedItem &other) : x(other.x), z(other.z), itemSize(other.itemSize),
+                                                leftSide(other.leftSide) {}
+    
+};
+
+class GeneratedTree : GeneratedItem {
+public:
+    mat4 trunk;
+    vector<mat4> leaves;
+    
+    GeneratedTree(float startPositionZ, float itemSize, bool leftSide = false, float gridSize = 100.0f,
+                  float roadWidth = 6.0f) : GeneratedItem(startPositionZ, itemSize, leftSide, gridSize, roadWidth) {}
+    
+    GeneratedTree(const GeneratedItem &other) : GeneratedItem(other) {};
+    
+    void generateTree() {
+        random_device dev;
+        default_random_engine gen(dev());
+        
+        uniform_real_distribution<float> trunkYDistribution(6.0f, 14.0f);
+        uniform_real_distribution<float> trunkXZDistribution(1.5f, 2.5f);
+        uniform_real_distribution<float> angleDistribution(0.0f, 90.0f);
+        uniform_int_distribution<int> leavesSliceNumDistribution(6, 10); // Range = [start, end)
+        
+        float angle = angleDistribution(gen);
+        float trunkScaleY = trunkYDistribution(gen);
+        float translateY = (trunkScaleY / 2.0f) - 0.3f;
+        int leavesSlicesNum = leavesSliceNumDistribution(gen);
+        
+        trunk = translate(mat4(1.0f), vec3(x, translateY, z)) *
+                rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f)) *
+                scale(mat4(1.0f), vec3(trunkXZDistribution(gen), trunkScaleY, trunkXZDistribution(gen)));
+        
+        float minStart = 4.0f;
+        float maxEnd = itemSize;
+        float maxStep = 2.0f;
+        float minStep = 2.0f;
+        
+        uniform_int_distribution<int> boolDistribution(0, 2); // Range = [start, end)
+        
+        bool goBigger;
+        float lastLeavesXZ = maxEnd;
+        translateY = trunkScaleY;
+        
+        for (int i = 0; i < leavesSlicesNum; i++) {
+            
+            if (lastLeavesXZ + minStep > maxEnd) {
+                goBigger = false;
+            } else if (lastLeavesXZ - minStep < minStart) {
+                goBigger = true;
+            } else {
+                goBigger = boolDistribution(gen);
+            }
+            
+            uniform_real_distribution<float> leavesXZDistribution =
+                    goBigger ?
+                    uniform_real_distribution<float>(lastLeavesXZ, lastLeavesXZ + maxStep) :
+                    uniform_real_distribution<float>(lastLeavesXZ - maxStep, lastLeavesXZ);
+            
+            
+            float leavesXZ = leavesXZDistribution(gen);
+            
+            angle = angleDistribution(gen);
+            leaves.push_back(translate(mat4(1.0f), vec3(x, translateY, z)) *
+                             rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f)) *
+                             scale(mat4(1.0f), vec3(leavesXZ, 1.0f, leavesXZ)));
+            translateY += 1.0f;
+            
+            lastLeavesXZ = leavesXZ;
+        }
+    }
+    
 };
 
 // A world chunk consists of a ground tile of 100x100, the road and all items (trees, bushes, etc) that are positioned
-// stationarily on it. The position information of all items is saved to be able to revisit previously generated chunks.
-struct WorldChunk {
+// on it. The position information of all items is saved to be able to revisit previously generated chunks.
+class WorldChunk {
+public:
     enum itemType {
-        SMALL_TREE, BIG_TREE, BUSH, ROCK, RABBIT
+        RANDOM_TREE, SMALL_TREE, BIG_TREE, BUSH, ROCK, RABBIT
     };
     
-    vector<PosGenerator> bigTreePositions;
-    vector<PosGenerator> smallTreePositions;
-    vector<PosGenerator> rockPositions;
-    vector<PosGenerator> bushPositions;
-    vector<PosGenerator> rabbitPositions;
+    vector<GeneratedTree> randomTrees;
+    vector<GeneratedItem> randomTreePositions;
+    vector<GeneratedItem> bigTreePositions;
+    vector<GeneratedItem> smallTreePositions;
+    vector<GeneratedItem> rockPositions;
+    vector<GeneratedItem> bushPositions;
+    vector<GeneratedItem> rabbitPositions;
     
     // Num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
     bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
@@ -1435,13 +1511,17 @@ struct WorldChunk {
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
-        generateItems(23, 16, 10, 1);
+        generateItems(9, 18, 10, 10, 2);
     };
     
-    bool insertItem(PosGenerator itemPos, itemType item) {
-        vector<PosGenerator> *positions;
+    // If item overlaps an occupied position, it's not inserted and false is returned
+    bool insertItem(GeneratedItem itemPos, itemType item) {
+        vector<GeneratedItem> *positions;
         
         switch (item) {
+            case RANDOM_TREE:
+                positions = &randomTreePositions;
+                break;
             case BUSH:
                 positions = &bushPositions;
                 break;
@@ -1465,7 +1545,7 @@ struct WorldChunk {
         int x = static_cast<int>(itemPos.x + 50 - (itemPos.itemSize / 2)) + (itemPos.leftSide ? 0 : -53);
         int z = static_cast<int>(itemPos.z) - (100 * chunkPositionID + 50) - 2;
         
-        // Check if the generated tree positions are already occupied
+        // Check if the generated positions are already occupied
         for (int i = x; i < static_cast<int>(round(itemPos.itemSize)) + x; i++) {
             for (int j = z; j < static_cast<int>(round(itemPos.itemSize)) + z; j++) {
                 if (occupiedGrids[i][j]) {
@@ -1486,37 +1566,50 @@ struct WorldChunk {
         return true;
     }
     
-    void generateItems(int maxBigTrees, int maxSmallTrees, int maxBushes, int maxRabbits) {
+    void generateItems(int maxRandTrees, int maxBigTrees, int maxSmallTrees, int maxBushes, int maxRabbits) {
         
         // To toggle between left and right sides of the road
         // Based on the chunk ID so that the side that gets odd num of items (one extra item) is alternated each chunk
         bool toggleSide = chunkPositionID % 2 == 0;
         
+        while (maxRandTrees > 0) {
+            toggleSide = !toggleSide;
+            insertItem(GeneratedItem(chunkPositionZ, 8.0f, toggleSide), RANDOM_TREE);
+            --maxRandTrees;
+        }
+        
+        for (auto tree: randomTreePositions) {
+            GeneratedTree randomTree(tree);
+            randomTree.generateTree();
+            randomTrees.push_back(randomTree);
+        }
+        randomTreePositions.clear();
+        
         // Big trees on right & left sides (max because if the position generated overlaps another we discard it)
         while (maxBigTrees > 0) {
             toggleSide = !toggleSide;
-            insertItem(PosGenerator(chunkPositionZ, 12.0f, toggleSide), BIG_TREE);
+            insertItem(GeneratedItem(chunkPositionZ, 12.0f, toggleSide), BIG_TREE);
             --maxBigTrees;
         }
         
         // Small trees on right & left sides
         while (maxSmallTrees > 0) {
             toggleSide = !toggleSide;
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, toggleSide), SMALL_TREE);
+            insertItem(GeneratedItem(chunkPositionZ, 5.0f, toggleSide), SMALL_TREE);
             --maxSmallTrees;
         }
         
         // Bushes on right & left sides
         while (maxBushes > 0) {
             toggleSide = !toggleSide;
-            insertItem(PosGenerator(chunkPositionZ, 5.0f, toggleSide), BUSH);
+            insertItem(GeneratedItem(chunkPositionZ, 5.0f, toggleSide), BUSH);
             --maxBushes;
         }
         
         // Rabbits on right & left sides
         while (maxRabbits > 0) {
             toggleSide = !toggleSide;
-            insertItem(PosGenerator(chunkPositionZ, 4.0f, toggleSide), RABBIT);
+            insertItem(GeneratedItem(chunkPositionZ, 4.0f, toggleSide), RABBIT);
             --maxRabbits;
         }
         
@@ -1591,6 +1684,21 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         }
         
         glBindVertexArray(texturedCubeVAO);
+        for (auto tree: chunk.randomTrees) {
+            glBindTexture(GL_TEXTURE_2D, woodTextureID);
+            
+            mat4 trunkMatrix = tree.trunk;
+            SetUniformMat4(shader, "model_matrix", trunkMatrix);
+            SetUniformVec3(shader, "object_color", vec3(0.267f, 0.129f, 0.004f)); // Brown
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            
+            glBindTexture(GL_TEXTURE_2D, leavesTextureID);
+            SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
+            for (auto leavesSlice: tree.leaves) {
+                SetUniformMat4(shader, "model_matrix", leavesSlice);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
+        }
     }
     
     drawCar(shader, carTransform, sphereVAO, carMove, carTextureID, tireTextureID);
