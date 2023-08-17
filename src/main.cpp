@@ -131,7 +131,7 @@ const TexturedColoredVertex texturedCubeVertexArray[] = {  // position, normal, 
 void drawBush(GLuint shader, float z, float x, float initial, int draw, GLuint text) {
     if (draw == 1) {
         mat4 bushMatrix =
-                translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+                translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) * rotate(mat4(1.0f), radians(90.0f), vec3(0.0f,1.0f,0.0f))* scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
         glBindTexture(GL_TEXTURE_2D, text);
         SetUniformMat4(shader, "model_matrix", bushMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.5f)); // Green
@@ -635,10 +635,7 @@ int main(int argc, char *argv[]) {
     int lastCState = GLFW_RELEASE;
     int lastMouseLeftState = GLFW_RELEASE;
 
-    float angle = 0.0f;
-    mat4 carTransform =
-            translate(mat4(1.0f), vec3(carMove.x, 0.0f, carMove.z)) * translate(mat4(1.0f), vec3(-2.25, 0.5, 10.0f)) *translate(mat4(1.0f), vec3(2.25f, 1.0f, -5.0f)) *
-                    rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f));
+    float carAngle = 0.0f; // Initial car and headlights rotation around y-axis
     
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
@@ -661,12 +658,10 @@ int main(int argc, char *argv[]) {
         float dt = glfwGetTime() - lastFrameTime;
         lastFrameTime += dt;
         
-        
         // set projection matrix for fov changes
-        projectionMatrix = glm::perspective(radians(fov),            // field of view in degrees
-                                            800.0f / 600.0f,  // aspect ratio
-                                            0.5f, 250.0f);   // near and far (near > 0)
-        
+        projectionMatrix = glm::perspective(radians(fov),     // field of view in degrees
+                                            800.0f / 600.0f,  // screen aspect ratio
+                                            0.5f, 250.0f);    // near and far planes
         setProjectionMatrix(shaderScene, projectionMatrix);
         
         carTransform = translate(mat4(1.0f), vec3(carMove.x, 0.0f, carMove.z)) *translate(mat4(1.0f), vec3(2.25f, 1.0f, -5.0f)) *
@@ -1458,7 +1453,7 @@ GLuint createSphereObject() {
             positions.push_back(glm::vec3(xPos, yPos, zPos));
             colors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
             uv.push_back(glm::vec2(xSegment, ySegment));
-            normals.push_back(glm::vec3(xPos, yPos, zPos));
+            normals.push_back(normalize(vec3(xPos, yPos, zPos)));
         }
     }
     
