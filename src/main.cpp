@@ -36,7 +36,7 @@ GLuint createSkyboxObject();
 
 void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
                  GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
-                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove, const mat4 &carTransform);
+                 GLuint carTextureID, GLuint tireTextureID, GLuint furTextureID, vec3 carMove, const mat4 &carTransform);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -228,6 +228,62 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
     }
 }
 
+void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorChoice, GLuint furr) {
+    //bind furr
+    
+    glBindTexture(GL_TEXTURE_2D, furr);
+    
+    mat4 rabbit;
+    float sizeInc = size;
+    mat4 reposition =translate(mat4(1.0f), vec3(x - 1.5f, 0.0f, z));//position rabbit in scene
+    vec3 color = colorChoice;
+    
+    mat4 body = translate(mat4(1.0f), sizeInc*vec3(2.25, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc*vec3(3.5f, 2.0f, 3.0f));
+    rabbit = reposition * body;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 head = translate(mat4(1.0f), sizeInc*vec3(1.0f, 2.5f, 0.0f)) * scale(mat4(1.0f), sizeInc*vec3(2.0f, 1.0f, 1.5f));
+    rabbit = reposition * head;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 ear1 = translate(mat4(1.0f), sizeInc*vec3(1.5f , 3.0f, -0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 3.0f, 0.5f));
+    rabbit = reposition * ear1;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 ear2 = translate(mat4(1.0f), sizeInc*vec3(1.5f, 3.0f, 0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 3.0f, 0.5));
+    rabbit = reposition * ear2;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    glBindVertexArray(vaos);
+    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f,0.70f))* scale(mat4(1.0f), sizeInc*vec3(0.3f, 0.3f, 0.3f));
+    rabbit = reposition * eye1;
+    SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, -0.70f ))* scale(mat4(1.0f), sizeInc* vec3(0.3f, 0.3f, 0.3f));
+    rabbit = reposition * eye2;
+    SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    mat4 tail = translate(mat4(1.0f), sizeInc*vec3(4.25f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc* vec3(0.5f, 0.5f, 0.5f));
+    rabbit = reposition * tail;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", rabbit);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    
+}
+
 void drawCar(GLuint shader_id, const mat4 &grpMatrix, int vaos, vec3 carMove, GLuint carText,
              GLuint tireText) {
     glBindTexture(GL_TEXTURE_2D, carText);
@@ -392,6 +448,7 @@ int main(int argc, char *argv[]) {
     GLuint dirtTextureID = loadTexture(PATH_PREFIX "assets/textures/dirt.png");
     GLuint carTextureID = loadTexture(PATH_PREFIX "assets/textures/car.jpg");
     GLuint tireTextureID = loadTexture(PATH_PREFIX "assets/textures/tire.jpg");
+    GLuint furTextureID = loadTexture(PATH_PREFIX "assets/textures/fur.jpg");
     
     vector<std::string> skyFaces1 {
             PATH_PREFIX "assets/textures/skybox/right.jpeg",  // right
@@ -762,7 +819,7 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderShadow, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
-                        leavesTextureID, carTextureID, tireTextureID, carMove, carTransform);
+                        leavesTextureID, carTextureID, tireTextureID, furTextureID, carMove, carTransform);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -801,7 +858,7 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
-                        leavesTextureID, carTextureID, tireTextureID, carMove, carTransform);
+                        leavesTextureID, carTextureID, tireTextureID, furTextureID, carMove, carTransform);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -1494,13 +1551,14 @@ struct PosGenerator {
 // stationarily on it. The position information of all items is saved to be able to revisit previously generated chunks.
 struct WorldChunk {
     enum itemType {
-        SMALL_TREE, BIG_TREE, BUSH, ROCK
+        SMALL_TREE, BIG_TREE, BUSH, ROCK, RABBIT
     };
     
     vector<PosGenerator> bigTreePositions;
     vector<PosGenerator> smallTreePositions;
     vector<PosGenerator> rockPositions;
     vector<PosGenerator> bushPositions;
+    vector<PosGenerator> rabbitPositions;
     
     // Num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
     bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
@@ -1511,7 +1569,7 @@ struct WorldChunk {
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
-        generateItems(60);
+        generateItems(80);
     };
     
     bool insertItem(PosGenerator itemPos, itemType item) {
@@ -1529,6 +1587,8 @@ struct WorldChunk {
             case SMALL_TREE:
                 positions = &smallTreePositions;
                 break;
+            case RABBIT:
+                positions = &rabbitPositions;
             default:
                 break;
         }
@@ -1574,7 +1634,11 @@ struct WorldChunk {
             insertItem(PosGenerator(chunkPositionZ, 5.0f, false), BUSH);
             insertItem(PosGenerator(chunkPositionZ, 5.0f, true), BUSH);
             
-            numOfItems -= 6;
+            // Rabbits on right & left sides
+            insertItem(PosGenerator(chunkPositionZ, 4.0f, false), RABBIT);
+            insertItem(PosGenerator(chunkPositionZ, 4.0f, true), RABBIT);
+            
+            numOfItems -= 8;
         }
     }
     
@@ -1593,7 +1657,7 @@ int lastChunkID = -100;
 
 void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
                  GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
-                 GLuint carTextureID, GLuint tireTextureID, vec3 carMove, const mat4 &carTransform) {
+                 GLuint carTextureID, GLuint tireTextureID, GLuint furTextureID, vec3 carMove, const mat4 &carTransform) {
     
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
@@ -1633,6 +1697,11 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         
         for (auto tree: chunk.smallTreePositions) {
             drawTree(shader, tree.z, tree.x, 0.0f, 2, woodTextureID, leavesTextureID);
+        }
+        
+        for (auto rabbit: chunk.rabbitPositions) {
+            drawRabbit(shader, 0.5f, sphereVAO, rabbit.x, rabbit.z, vec3(1.0f, 1.0f, 1.0f), furTextureID);
+            glBindVertexArray(texturedCubeVAO);
         }
         
         glBindVertexArray(sphereVAO);
