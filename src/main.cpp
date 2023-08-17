@@ -36,7 +36,8 @@ GLuint createSkyboxObject();
 
 void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
                  GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
-                 GLuint carTextureID, GLuint tireTextureID, GLuint furTextureID, GLuint eyeTextureID, vec3 carMove, const mat4 &carTransform);
+                 GLuint carTextureID, GLuint tireTextureID, GLuint furTextureID, GLuint eyeTextureID, vec3 carMove,
+                 const mat4 &carTransform);
 
 // Translation keyboard input variables
 vec3 position(0.0f);
@@ -131,7 +132,8 @@ const TexturedColoredVertex texturedCubeVertexArray[] = {  // position, normal, 
 void drawBush(GLuint shader, float z, float x, float initial, int draw, GLuint text) {
     if (draw == 1) {
         mat4 bushMatrix =
-                translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) * rotate(mat4(1.0f), radians(90.0f), vec3(0.0f,1.0f,0.0f))* scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+                translate(mat4(1.0f), vec3(initial + x, 1.0f, 0.0f + z)) *
+                rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
         glBindTexture(GL_TEXTURE_2D, text);
         SetUniformMat4(shader, "model_matrix", bushMatrix);
         SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.5f)); // Green
@@ -228,35 +230,40 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
     }
 }
 
-void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorChoice, GLuint furr, GLuint eyeTex) {
+void
+drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorChoice, GLuint furr, GLuint eyeTex) {
     //bind furr
     
     glBindTexture(GL_TEXTURE_2D, furr);
     
     mat4 rabbit;
     float sizeInc = size;
-    mat4 reposition =translate(mat4(1.0f), vec3(x - 1.5f, 0.0f, z));//position rabbit in scene
+    mat4 reposition = translate(mat4(1.0f), vec3(x - 1.5f, 0.0f, z));//position rabbit in scene
     vec3 color = colorChoice;
     
-    mat4 body = translate(mat4(1.0f), sizeInc*vec3(2.25, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc*vec3(3.5f, 2.0f, 3.0f));
+    mat4 body = translate(mat4(1.0f), sizeInc * vec3(2.25, 1.0f, 0.0f)) *
+                scale(mat4(1.0f), sizeInc * vec3(3.5f, 2.0f, 3.0f));
     rabbit = reposition * body;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 head = translate(mat4(1.0f), sizeInc*vec3(1.0f, 2.5f, 0.0f)) * scale(mat4(1.0f), sizeInc*vec3(2.0f, 1.0f, 1.5f));
+    mat4 head = translate(mat4(1.0f), sizeInc * vec3(1.0f, 2.5f, 0.0f)) *
+                scale(mat4(1.0f), sizeInc * vec3(2.0f, 1.0f, 1.5f));
     rabbit = reposition * head;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 ear1 = translate(mat4(1.0f), sizeInc*vec3(1.5f , 3.75f, -0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 1.5f, 0.5f));
+    mat4 ear1 = translate(mat4(1.0f), sizeInc * vec3(1.5f, 3.75f, -0.5f)) *
+                scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.5f, 0.5f));
     rabbit = reposition * ear1;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 ear2 = translate(mat4(1.0f), sizeInc*vec3(1.5f, 3.75f, 0.5f)) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 1.5f, 0.5));
+    mat4 ear2 = translate(mat4(1.0f), sizeInc * vec3(1.5f, 3.75f, 0.5f)) *
+                scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.5f, 0.5));
     rabbit = reposition * ear2;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
@@ -265,13 +272,17 @@ void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 c
     glBindTexture(GL_TEXTURE_2D, eyeTex);
     
     glBindVertexArray(vaos);
-    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, 0.7f))* rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc*vec3(0.3f, 0.3f, 0.3f));
+    mat4 eye1 = translate(mat4(1.0f), sizeInc * vec3(1.0f, 2.5f, 0.7f)) *
+                rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f)) *
+                scale(mat4(1.0f), sizeInc * vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye1;
     SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(1.0f , 2.5f, -0.7f ))* rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), sizeInc* vec3(0.3f, 0.3f, 0.3f));
+    mat4 eye2 = translate(mat4(1.0f), sizeInc * vec3(1.0f, 2.5f, -0.7f)) *
+                rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) *
+                scale(mat4(1.0f), sizeInc * vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye2;
     SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", rabbit);
@@ -279,7 +290,8 @@ void drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 c
     
     glBindTexture(GL_TEXTURE_2D, furr);
     
-    mat4 tail = translate(mat4(1.0f), sizeInc*vec3(4.25f, 1.0f, 0.0f))* scale(mat4(1.0f), sizeInc* vec3(0.5f, 0.5f, 0.5f));
+    mat4 tail = translate(mat4(1.0f), sizeInc * vec3(4.25f, 1.0f, 0.0f)) *
+                scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.5f));
     rabbit = reposition * tail;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
@@ -301,98 +313,98 @@ void drawCar(GLuint shader_id, const mat4 &grpMatrix, int vaos, vec3 carMove, GL
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 light1 = translate(mat4(1.0f), vec3(-1.25, 0.0f, -4.0f)) *
-            scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.1f));
+                  scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.1f));
     car = grpMatrix * light1;
     SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 light2 = translate(mat4(1.0f), vec3(1.25f, 0.0f, -4.0f)) *
-            scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.1f));
+                  scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.1f));
     car = grpMatrix * light2;
     SetUniformVec3(shader_id, "object_color", vec3(0, 1, 1));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side1 = translate(mat4(1.0f), vec3(-1.5f, 1.5, 2)) *
-            scale(mat4(1.0f), vec3(0.1f, 1.75, 3));
+                 scale(mat4(1.0f), vec3(0.1f, 1.75, 3));
     car = grpMatrix * side1;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side1_2 = translate(mat4(1.0f), vec3(-1.5f, 2.23, -1)) *
-            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+                   scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
     car = grpMatrix * side1_2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side1_3 = translate(mat4(1.0f), vec3(-1.5f, 0.75, -1)) *
-            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+                   scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
     car = grpMatrix * side1_3;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side1_4 = translate(mat4(1.0f), vec3(-1.5f, 1.5, -2)) *
-            scale(mat4(1.0f), vec3(0.15f, 1.3, 1));
+                   scale(mat4(1.0f), vec3(0.15f, 1.3, 1));
     car = grpMatrix * side1_4;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side2 = translate(mat4(1.0f), vec3(1.5f, 1.5, 2)) *
-            scale(mat4(1.0f), vec3(0.1f, 1.75, 3));
+                 scale(mat4(1.0f), vec3(0.1f, 1.75, 3));
     car = grpMatrix * side2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side2_2 = translate(mat4(1.0f), vec3(1.5f, 2.23, -1)) *
-            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+                   scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
     car = grpMatrix * side2_2;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side2_3 = translate(mat4(1.0f), vec3(1.5f, 0.75, -1)) *
-            scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
+                   scale(mat4(1.0f), vec3(0.1f, 0.3, 3));
     car = grpMatrix * side2_3;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 side2_4 = translate(mat4(1.0f), vec3(1.5f, 1.5, -2)) *
-            scale(mat4(1.0f), vec3(0.15f, 1.3, 1));
+                   scale(mat4(1.0f), vec3(0.15f, 1.3, 1));
     car = grpMatrix * side2_4;
     SetUniformVec3(shader_id, "object_color", vec3(255 / 255.0, 105 / 255.0, 180 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 window1 = translate(mat4(1.0f), vec3(0.0f, 0.75, -2.5)) *
-            scale(mat4(1.0f), vec3(3, 0.3, 0.1f));
+                   scale(mat4(1.0f), vec3(3, 0.3, 0.1f));
     car = grpMatrix * window1;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 window2 = translate(mat4(1.0f), vec3(0.0f, 2.25, -2.5)) *
-            scale(mat4(1.0f), vec3(3, 0.3, 0.1f));
+                   scale(mat4(1.0f), vec3(3, 0.3, 0.1f));
     car = grpMatrix * window2;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 back = translate(mat4(1.0f), vec3(0.0f, 1.5, 3.5)) *
-            scale(mat4(1.0f), vec3(3, 1.75, 0.1f));
+                scale(mat4(1.0f), vec3(3, 1.75, 0.1f));
     car = grpMatrix * back;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
     mat4 top = translate(mat4(1.0f), vec3(0.0f, 2.4, 0.5)) *
-            scale(mat4(1.0f), vec3(3, 0.1, 6.0f));
+               scale(mat4(1.0f), vec3(3, 0.1, 6.0f));
     car = grpMatrix * top;
     SetUniformVec3(shader_id, "object_color", vec3(1, 0, 1));
     SetUniformMat4(shader_id, "model_matrix", car);
@@ -401,7 +413,7 @@ void drawCar(GLuint shader_id, const mat4 &grpMatrix, int vaos, vec3 carMove, GL
     glBindTexture(GL_TEXTURE_2D, tireText);
     glBindVertexArray(vaos);
     mat4 wheel1 = translate(mat4(1.0f), vec3(2.25f, -0.5f, -2.0f)) *
-            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
                   scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
     car = grpMatrix * wheel1;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
@@ -409,23 +421,23 @@ void drawCar(GLuint shader_id, const mat4 &grpMatrix, int vaos, vec3 carMove, GL
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
     mat4 wheel2 = translate(mat4(1.0f), vec3(2.25f, -0.5f, 2.0f)) *
-            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
                   scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
-    car = grpMatrix *wheel2;
+    car = grpMatrix * wheel2;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 wheel3 = translate(mat4(1.0f), vec3(-2.25, -0.5f, -2.0f))  *
-            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+    mat4 wheel3 = translate(mat4(1.0f), vec3(-2.25, -0.5f, -2.0f)) *
+                  rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
                   scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
-    car = grpMatrix *wheel3;
+    car = grpMatrix * wheel3;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
     SetUniformMat4(shader_id, "model_matrix", car);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
     mat4 wheel4 = translate(mat4(1.0f), vec3(-2.25, -0.5f, 2.0f)) *
-            rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
+                  rotate(mat4(1.0f), radians(rotX), vec3(1, 0, 0)) *
                   scale(mat4(1.0f), vec3(0.5f, 1.0f, 1.0f));
     car = grpMatrix * wheel4;
     SetUniformVec3(shader_id, "object_color", vec3(50 / 255.0, 50 / 255.0, 50 / 255.0));
@@ -455,7 +467,7 @@ int main(int argc, char *argv[]) {
     GLuint furTextureID = loadTexture(PATH_PREFIX "assets/textures/fur.jpg");
     GLuint eyeTextureID = loadTexture(PATH_PREFIX "assets/textures/eye.jpg");
     
-    vector<std::string> skyFaces1 {
+    vector<std::string> skyFaces1{
             PATH_PREFIX "assets/textures/skybox/right.jpeg",  // right
             PATH_PREFIX "assets/textures/skybox/left.jpeg",  // left
             PATH_PREFIX "assets/textures/skybox/top.jpeg",  // top
@@ -463,7 +475,7 @@ int main(int argc, char *argv[]) {
             PATH_PREFIX "assets/textures/skybox/front.jpeg",  // front
             PATH_PREFIX "assets/textures/skybox/back.jpeg"   // back
     };
-    vector<std::string> skyFaces2 {
+    vector<std::string> skyFaces2{
             PATH_PREFIX "assets/textures/skybox/right2.jpg",  // right
             PATH_PREFIX "assets/textures/skybox/left2.jpg",  // left
             PATH_PREFIX "assets/textures/skybox/top2.jpg",  // top
@@ -471,7 +483,7 @@ int main(int argc, char *argv[]) {
             PATH_PREFIX "assets/textures/skybox/front2.jpg",  // front
             PATH_PREFIX "assets/textures/skybox/back2.jpg"   // back
     };
-    vector<std::string> skyFaces3 {
+    vector<std::string> skyFaces3{
             PATH_PREFIX "assets/textures/skybox/right3.jpg",  // right
             PATH_PREFIX "assets/textures/skybox/left3.jpg",  // left
             PATH_PREFIX "assets/textures/skybox/top3.jpg",  // top
@@ -479,7 +491,7 @@ int main(int argc, char *argv[]) {
             PATH_PREFIX "assets/textures/skybox/front3.jpg",  // front
             PATH_PREFIX "assets/textures/skybox/back3.jpg"   // back
     };
-    vector<std::string> skyFaces4 {
+    vector<std::string> skyFaces4{
             PATH_PREFIX "assets/textures/skybox/right4.jpg",  // right
             PATH_PREFIX "assets/textures/skybox/left4.jpg",  // left
             PATH_PREFIX "assets/textures/skybox/top4.jpg",  // top
@@ -487,7 +499,7 @@ int main(int argc, char *argv[]) {
             PATH_PREFIX "assets/textures/skybox/front4.jpg",  // front
             PATH_PREFIX "assets/textures/skybox/back4.jpg"   // back
     };
-    vector<std::string> skyFaces5 {
+    vector<std::string> skyFaces5{
             PATH_PREFIX "assets/textures/skybox/right5.jpg",  // right
             PATH_PREFIX "assets/textures/skybox/left5.jpg",  // left
             PATH_PREFIX "assets/textures/skybox/top5.jpg",  // top
@@ -495,7 +507,7 @@ int main(int argc, char *argv[]) {
             PATH_PREFIX "assets/textures/skybox/front5.jpg",  // front
             PATH_PREFIX "assets/textures/skybox/back5.jpg"   // back
     };
-
+    
     GLuint cubemapTexture1 = loadCubemap(skyFaces1);
     GLuint cubemapTexture2 = loadCubemap(skyFaces2);
     GLuint cubemapTexture3 = loadCubemap(skyFaces3);
@@ -634,26 +646,23 @@ int main(int argc, char *argv[]) {
     int previous1state = GLFW_RELEASE;
     int lastCState = GLFW_RELEASE;
     int lastMouseLeftState = GLFW_RELEASE;
-
+    
     float carAngle = 0.0f; // Initial car and headlights rotation around y-axis
     
     // Entering Main Loop
     while (!glfwWindowShouldClose(window)) {
         if (skyNum == 1) {
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture1);
-        } else if (skyNum == 2){
+        } else if (skyNum == 2) {
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture2);
-        }
-        else if (skyNum == 3) {
+        } else if (skyNum == 3) {
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture3);
-        }
-        else if (skyNum == 4) {
+        } else if (skyNum == 4) {
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture4);
-        }
-        else {
+        } else {
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture5);
         }
-
+        
         // Frame time calculation
         float dt = glfwGetTime() - lastFrameTime;
         lastFrameTime += dt;
@@ -666,7 +675,7 @@ int main(int argc, char *argv[]) {
         
         // This matrix is applied to all car parts and the car's headlights (light position, focus & direction)
         mat4 carTransform = translate(mat4(1.0f), vec3(carMove.x, 1.2f, carMove.z + 5)) *
-                       rotate(mat4(1.0f), radians(carAngle), vec3(0.0f, 1.0f, 0.0f));
+                            rotate(mat4(1.0f), radians(carAngle), vec3(0.0f, 1.0f, 0.0f));
         
         // Apply the car's translation & rotation to the light position
         vec3 lightPosition = vec3(carTransform * vec4(vec3(0.0f, -0.5f, -3.5f), 1.0f));
@@ -806,7 +815,8 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderShadow, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
-                        leavesTextureID, carTextureID, tireTextureID, furTextureID, eyeTextureID, carMove, carTransform);
+                        leavesTextureID, carTextureID, tireTextureID, furTextureID, eyeTextureID, carMove,
+                        carTransform);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -845,7 +855,8 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(vao);
             
             renderScene(shaderScene, vao, sphereVAO, cameraPosition.z, roadTextureID, dirtTextureID, woodTextureID,
-                        leavesTextureID, carTextureID, tireTextureID, furTextureID, eyeTextureID, carMove, carTransform);
+                        leavesTextureID, carTextureID, tireTextureID, furTextureID, eyeTextureID, carMove,
+                        carTransform);
             
             // Unbind geometry
             glBindVertexArray(0);
@@ -908,15 +919,15 @@ int main(int argc, char *argv[]) {
                 SetUniform1Value(shaderScene, "useCarLight", carLight); // Apply headlights toggle
             }
             previousLstate = glfwGetKey(window, GLFW_KEY_L);
-
+            
             // Toggle SkyBoxes
             if (previous1state == GLFW_RELEASE && glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-                skyNum +=1;
-                if(skyNum>=6){skyNum=1;}
+                skyNum += 1;
+                if (skyNum >= 6) { skyNum = 1; }
             }
             previous1state = glfwGetKey(window, GLFW_KEY_1);
-
-
+            
+            
             double mousePosX, mousePosY;
             glfwGetCursorPos(window, &mousePosX, &mousePosY);
             
@@ -1622,28 +1633,28 @@ struct WorldChunk {
             insertItem(PosGenerator(chunkPositionZ, 12.0f, toggleSide), BIG_TREE);
             --maxBigTrees;
         }
-
+        
         // Small trees on right & left sides
         while (maxSmallTrees > 0) {
             toggleSide = !toggleSide;
             insertItem(PosGenerator(chunkPositionZ, 5.0f, toggleSide), SMALL_TREE);
             --maxSmallTrees;
         }
-
+        
         // Bushes on right & left sides
         while (maxBushes > 0) {
             toggleSide = !toggleSide;
             insertItem(PosGenerator(chunkPositionZ, 5.0f, toggleSide), BUSH);
             --maxBushes;
         }
-
+        
         // Rabbits on right & left sides
         while (maxRabbits > 0) {
             toggleSide = !toggleSide;
             insertItem(PosGenerator(chunkPositionZ, 4.0f, toggleSide), RABBIT);
             --maxRabbits;
         }
-
+        
     }
     
     [[nodiscard]] mat4 getGroundMatrix() const {
@@ -1661,7 +1672,8 @@ int lastChunkID = -100;
 
 void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float cameraPosZ, GLuint roadTextureID,
                  GLuint dirtTextureID, GLuint woodTextureID, GLuint leavesTextureID,
-                 GLuint carTextureID, GLuint tireTextureID, GLuint furTextureID, GLuint eyeTextureID, vec3 carMove, const mat4 &carTransform) {
+                 GLuint carTextureID, GLuint tireTextureID, GLuint furTextureID, GLuint eyeTextureID, vec3 carMove,
+                 const mat4 &carTransform) {
     
     
     int currentChunkID = static_cast<int>(floor((cameraPosZ - 50) / 100));
