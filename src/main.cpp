@@ -217,38 +217,39 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
 }
 
 void
-drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorChoice, GLuint furr, GLuint eyeTex) {
+drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorChoice, GLuint furr, GLuint eyeTex, float angle) {
     //bind furr
     
     glBindTexture(GL_TEXTURE_2D, furr);
-    
     mat4 rabbit;
+    mat4 rotation = rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f));
+    
     float sizeInc = size;
-    mat4 reposition = translate(mat4(1.0f), vec3(x - 1.5f, 0.0f, z));//position rabbit in scene
+    mat4 reposition = translate(mat4(1.0f), vec3(x, -0.03f, z)) * rotation;//position rabbit in scene
     vec3 color = colorChoice;
     
-    mat4 body = translate(mat4(1.0f), sizeInc * vec3(2.25, 1.0f, 0.0f)) *
+    mat4 body = translate(mat4(1.0f), sizeInc * vec3(0.0f, 1.0f, 0.0f)) *
                 scale(mat4(1.0f), sizeInc * vec3(3.5f, 2.0f, 3.0f));
     rabbit = reposition * body;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 head = translate(mat4(1.0f), sizeInc * vec3(1.0f, 2.5f, 0.0f)) *
+    mat4 head = translate(mat4(1.0f), sizeInc * vec3(-1.25f, 2.5f, 0.0f)) *
                 scale(mat4(1.0f), sizeInc * vec3(2.0f, 1.0f, 1.5f));
     rabbit = reposition * head;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 ear1 = translate(mat4(1.0f), sizeInc * vec3(1.5f, 3.75f, -0.5f)) *
+    mat4 ear1 = translate(mat4(1.0f), sizeInc * vec3(-0.75f, 3.75f, -0.5f)) *
                 scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.5f, 0.5f));
     rabbit = reposition * ear1;
     SetUniformVec3(shader_id, "object_color", color);
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
-    mat4 ear2 = translate(mat4(1.0f), sizeInc * vec3(1.5f, 3.75f, 0.5f)) *
+    mat4 ear2 = translate(mat4(1.0f), sizeInc * vec3(-0.75f, 3.75f, 0.5f)) *
                 scale(mat4(1.0f), sizeInc * vec3(0.5f, 1.5f, 0.5));
     rabbit = reposition * ear2;
     SetUniformVec3(shader_id, "object_color", color);
@@ -258,7 +259,7 @@ drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorC
     glBindTexture(GL_TEXTURE_2D, eyeTex);
     
     glBindVertexArray(vaos);
-    mat4 eye1 = translate(mat4(1.0f), sizeInc * vec3(1.0f, 2.5f, 0.7f)) *
+    mat4 eye1 = translate(mat4(1.0f), sizeInc * vec3(-1.25f, 2.5f, 0.7f)) *
                 rotate(mat4(1.0f), radians(90.0f), vec3(0.0f, 1.0f, 0.0f)) *
                 scale(mat4(1.0f), sizeInc * vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye1;
@@ -266,7 +267,7 @@ drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorC
     SetUniformMat4(shader_id, "model_matrix", rabbit);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     
-    mat4 eye2 = translate(mat4(1.0f), sizeInc * vec3(1.0f, 2.5f, -0.7f)) *
+    mat4 eye2 = translate(mat4(1.0f), sizeInc * vec3(-1.25f, 2.5f, -0.7f)) *
                 rotate(mat4(1.0f), radians(-90.0f), vec3(0.0f, 1.0f, 0.0f)) *
                 scale(mat4(1.0f), sizeInc * vec3(0.3f, 0.3f, 0.3f));
     rabbit = reposition * eye2;
@@ -276,7 +277,7 @@ drawRabbit(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorC
     
     glBindTexture(GL_TEXTURE_2D, furr);
     
-    mat4 tail = translate(mat4(1.0f), sizeInc * vec3(4.25f, 1.0f, 0.0f)) *
+    mat4 tail = translate(mat4(1.0f), sizeInc * vec3(2.0f, 1.0f, 0.0f)) *
                 scale(mat4(1.0f), sizeInc * vec3(0.5f, 0.5f, 0.5f));
     rabbit = reposition * tail;
     SetUniformVec3(shader_id, "object_color", color);
@@ -1387,6 +1388,7 @@ public:
     float z;        // Translation factor on y-axis
     float itemSize; // Scaling factor for the widest point of the item
     bool leftSide;  // Whether the item is positioned on left or right side of the road
+    float angle;
     
     // The constructor generates position x & z for the item based on the arguments
     // float startPositionZ : The lower z-boundary of the world chunk which the item will be positioned on
@@ -1409,11 +1411,14 @@ public:
         
         x = xDistribution(generator);
         z = zDistribution(generator);
+        
+        uniform_real_distribution<float> angleDistribution(0.0f, 360.0f);
+        angle = angleDistribution(generator);
     };
     
     GeneratedItem(const GeneratedItem &other) : x(other.x), z(other.z), itemSize(other.itemSize),
-                                                leftSide(other.leftSide) {}
-    
+                                                leftSide(other.leftSide), angle(other.angle) {}
+                                                
 };
 
 class GeneratedTree : GeneratedItem {
@@ -1510,7 +1515,7 @@ public:
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
-        generateItems(9, 18, 10, 10, 2);
+        generateItems(9, 18, 10, 10, 5);
     };
     
     // If item overlaps an occupied position, it's not inserted and false is returned
@@ -1673,7 +1678,7 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         }
         
         for (auto rabbit: chunk.rabbitPositions) {
-            drawRabbit(shader, 0.5f, sphereVAO, rabbit.x, rabbit.z, vec3(1.0f, 1.0f, 1.0f), furTextureID, eyeTextureID);
+            drawRabbit(shader, 0.5f, sphereVAO, rabbit.x, rabbit.z, vec3(1.0f, 1.0f, 1.0f), furTextureID, eyeTextureID, rabbit.angle);
             glBindVertexArray(texturedCubeVAO);
         }
         
