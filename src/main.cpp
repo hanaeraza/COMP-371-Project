@@ -452,7 +452,7 @@ int main(int argc, char *argv[]) {
     // Load Textures
     GLuint leavesTextureID = loadTexture(PATH_PREFIX "assets/textures/leaves.png");
     GLuint woodTextureID = loadTexture(PATH_PREFIX "assets/textures/wood.jpg");
-    GLuint roadTextureID = loadTexture(PATH_PREFIX "assets/textures/dirtroad.jpg");
+    GLuint roadTextureID = loadTexture(PATH_PREFIX "assets/textures/road.jpeg");
     GLuint dirtTextureID = loadTexture(PATH_PREFIX "assets/textures/dirt.png");
     GLuint carTextureID = loadTexture(PATH_PREFIX "assets/textures/car.jpg");
     GLuint tireTextureID = loadTexture(PATH_PREFIX "assets/textures/tire.jpg");
