@@ -931,19 +931,10 @@ int main(int argc, char *argv[]) {
             float phi = radians(cameraVerticalAngle);
             
             
-            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // close window
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) { // close window
                 glfwSetWindowShouldClose(window, true);
-            
-            
-            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) && dx > 0) // moving left, zoom in
-            {
-                fov += 1.0f;
             }
             
-            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) && dx < 0) // moving right, zoom out
-            {
-                fov -= 1.0f;
-            }
             
             // Rotate car left
             if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
@@ -959,12 +950,19 @@ int main(int argc, char *argv[]) {
             if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) // zoom out
             {
                 fov += 1.0f;
+                fov = std::clamp(fov, 10.0f, 100.0f);
             }
             
             
             if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) // zoom in
             {
                 fov -= 1.0f;
+                fov = std::clamp(fov, 10.0f, 100.0f);
+            }
+            
+            if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) // reset zoom to standard
+            {
+                fov = 70.0f;
             }
             
             //Change between aerial and person view
