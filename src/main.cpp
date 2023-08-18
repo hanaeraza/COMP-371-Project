@@ -128,8 +128,17 @@ void drawBush(GLuint shader, float z, float x, float initial, int draw, GLuint t
     
 }
 
+// For randomized tree leaves colors
+vec3 green = vec3(0.0f, 1.0f, 0.0f);
+vec3 darkyellow = vec3(0.545f, 0.573f, 0.086f);
+vec3 lightgold = vec3(0.655f, 0.624f, 0.059f);
+vec3 marigold = vec3(0.545f, 0.573f, 0.086f);
+vec3 fulvous = vec3(0.914f, 0.525f, 0.016f);
+vec3 sinopia = vec3(0.875, 0.224, 0.031);
+vec3 treeColor[6] = {green, darkyellow, lightgold, marigold, fulvous, sinopia};
+
 //Draws the tree
-void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint woodText, GLuint leafText) {
+void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint woodText, GLuint leafText, int color) {
     
     if (tree == 1) {
         mat4 scaleDown = scale(mat4(1.0f), vec3(0.75f));
@@ -147,55 +156,52 @@ void drawTree(GLuint shader, float z, float x, float initial, int tree, GLuint w
         
         //Top leaves
         glBindTexture(GL_TEXTURE_2D, leafText);
+        SetUniform1Value(shader, "interpolateColor", true);
+        SetUniformVec3(shader, "object_color", treeColor[color]); // Green
         
         mat4 leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 10.0f, 0.0f)) * scale(mat4(1.0f), vec3(12.0f, 2.0f, 12.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
         leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 12.0f, 0.0f)) * scale(mat4(1.0f), vec3(10.0f, 2.0f, 10.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
         leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 14.0f, 0.0f)) * scale(mat4(1.0f), vec3(8.0f, 2.0f, 8.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
         leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 16.0f, 0.0f)) * scale(mat4(1.0f), vec3(6.0f, 2.0f, 6.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
         leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 18.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.0f, 2.0f, 4.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
         leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 20.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
         
         leavesMatrix =
                 translate(mat4(1.0f), vec3(0.0f, 21.5f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f));
         leavesMatrix = translateXZ * scaleDown * leavesMatrix;
         SetUniformMat4(shader, "model_matrix", leavesMatrix);
-        SetUniformVec3(shader, "object_color", vec3(0.0f, 1.0f, 0.0f)); // Green
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+        
+        SetUniform1Value(shader, "interpolateColor", false);
         
     } else if (tree == 2) {
         //Trunk
@@ -1387,6 +1393,7 @@ public:
     float itemSize; // Scaling factor for the widest point of the item
     bool leftSide;  // Whether the item is positioned on left or right side of the road
     float angle;
+    int colorID;
     
     // The constructor generates position x & z for the item based on the arguments
     // float startPositionZ : The lower z-boundary of the world chunk which the item will be positioned on
@@ -1410,12 +1417,17 @@ public:
         x = xDistribution(generator);
         z = zDistribution(generator);
         
+        // Generate random angle
         uniform_real_distribution<float> angleDistribution(0.0f, 360.0f);
         angle = angleDistribution(generator);
+        
+        // Generate random colorID (for tree leaves)
+        uniform_int_distribution<int> colorDistribution(0, 6);
+        colorID = colorDistribution(generator);
     };
     
     GeneratedItem(const GeneratedItem &other) : x(other.x), z(other.z), itemSize(other.itemSize),
-                                                leftSide(other.leftSide), angle(other.angle) {}
+                                                leftSide(other.leftSide), angle(other.angle), colorID(other.colorID) {}
                                                 
 };
 
@@ -1668,11 +1680,11 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         for (auto tree: chunk.bigTreePositions) {
-            drawTree(shader, tree.z, tree.x, 0.0f, 1, woodTextureID, leavesTextureID);
+            drawTree(shader, tree.z, tree.x, 0.0f, 1, woodTextureID, leavesTextureID, tree.colorID);
         }
         
         for (auto tree: chunk.smallTreePositions) {
-            drawTree(shader, tree.z, tree.x, 0.0f, 2, woodTextureID, leavesTextureID);
+            drawTree(shader, tree.z, tree.x, 0.0f, 2, woodTextureID, leavesTextureID, tree.colorID);
         }
         
         for (auto rabbit: chunk.rabbitPositions) {
