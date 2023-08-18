@@ -15,29 +15,25 @@ cmake --build <build_folder> --target install
 
 ## Features
 ### Transformations
-- Up arrow = translate model up
-- Left arrow = translate model left
-- Down arrow = translate model down
-- Right arrow = translate model right
-- U = scale model up
-- J = scale model down
-- Q = rotate model counterclockwise
-- E = rotate model clockwise
-- R = reset model back to origin
+- LEFT  = rotate car left
+- RIGHT = rotate car right
+- M = Zoom camera in
+- N = Zoom camera out
+- J = Reset camera zoom level
 ### Movement
-- W = move camera forward
-- A = move camera left
-- S = move camera backwards
-- D = move camera right
+- W = Move the camera and car forward
+- A = Move the camera and car left
+- S = Move the camera backwards
+- D = Move the camera right
 ### Toggles
-- T = toggle textures 
-- Z = toggle shadows
-- 0 = free camera (ground)
-- 1 = fixed camera (birds eye)
+- C = Swap between camera views
+- L = Toggle the headlights on and off
+- 1 - 5 = Swap between different sky textures
+
 
 ## Credits
 
 - Skybox Creation: [LearnOpenGL Tutorial](https://learnopengl.com/Advanced-OpenGL/Cubemaps)
-- 360 Skybox Texture: [AmbientCG](https://ambientcg.com/view?id=DaySkyHDRI027B)
-- Panorama to Cubemap Conversion: [Panorama-to-Cubemap Tool](https://jaxry.github.io/panorama-to-cubemap/)
+- Skybox Textures: [Space 3D](https://tools.wwwtyro.net/space-3d/index.html)
+- Labs provided on the COMP-371 course Moodle page
 
