@@ -128,6 +128,90 @@ void drawBush(GLuint shader, float z, float x, float initial, int draw, GLuint t
     
 }
 
+void drawSquirrel(GLuint shader_id, float size, int vaos, float x, float z, vec3 colorChoice, GLuint furr, GLuint eyeTex, float angle) {
+    //bind furr
+    
+    glBindTexture(GL_TEXTURE_2D, furr);
+    
+    mat4 squirrel;
+    float sizeInc = size;
+    mat4 reposition = translate(mat4(1.0f), vec3(x, 0, z)) * rotate(mat4(1.0f), radians(angle), vec3(0.0f, 1.0f, 0.0f)) ;//position squirrel in scene
+    vec3 color= colorChoice;
+    
+    SetUniform1Value(shader_id, "interpolateColor", true);
+    SetUniformVec3(shader_id, "object_color", color);
+    
+    mat4 body = translate(mat4(1.0f), sizeInc*vec3(0 , 1.5f, 0.0f)) * scale(mat4(1.0f), sizeInc*vec3(1, 2.0f, 0.8f));
+    squirrel = reposition * body;
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 foot1 = translate(mat4(1.0f), sizeInc*vec3(-0.5f, 0.7, 0.3f)) * scale(mat4(1.0f), sizeInc*vec3(0.4f, 0.3f, 0.5f));
+    squirrel = reposition * foot1;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 foot2 = translate(mat4(1.0f), sizeInc*vec3(0.5f, 0.7, 0.3f)) * scale(mat4(1.0f), sizeInc*vec3(0.4f, 0.3f, 0.5f));
+    squirrel = reposition * foot2;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 head = translate(mat4(1.0f), sizeInc*vec3(0 , 2.8, 0.5 )) * scale(mat4(1.0f), sizeInc*vec3(0.5f, 0.5f, 0.7));
+    squirrel = reposition * head;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 neck = translate(mat4(1.0f), sizeInc*vec3(0, 2 , 0.3 )) * scale(mat4(1.0f), sizeInc*vec3(0.2, 2, 0.2));
+    squirrel = reposition * neck;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 arms = translate(mat4(1.0f), sizeInc*vec3(0 , 2 , 0.0f)) * scale(mat4(1.0f), sizeInc*vec3(1.5, 0.3f, 0.3f));
+    squirrel = reposition * arms;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 tail = translate(mat4(1.0f), sizeInc*vec3(0 , 0.7, -0.8f)) *scale(mat4(1.0f), sizeInc*vec3(0.5, 0.3f, 1.5f));
+    squirrel = reposition *tail;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 ear1 = translate(mat4(1.0f), sizeInc*vec3(0.2, 3.1, 0.2 )) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 0.1f, 0.1));
+    squirrel = reposition * ear1;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    mat4 ear2 = translate(mat4(1.0f), sizeInc*vec3(-0.2 , 3.1, 0.2 )) * scale(mat4(1.0f), sizeInc*vec3(0.1f, 0.1f, 0.1));
+    squirrel = reposition * ear2;
+    SetUniformVec3(shader_id, "object_color", color);
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    glBindVertexArray(vaos);
+    glBindTexture(GL_TEXTURE_2D, eyeTex);
+    SetUniform1Value(shader_id, "interpolateColor", false);
+    
+    mat4 eye1 = translate(mat4(1.0f), sizeInc*vec3(-0.2 , 2.8 , 0.5 )) * scale(mat4(1.0f), sizeInc*vec3(0.15f, 0.15f, 0.15f));
+    squirrel = reposition * eye1;
+    SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+    mat4 eye2 = translate(mat4(1.0f), sizeInc*vec3(0.2 , 2.8 , 0.5 )) * scale(mat4(1.0f), sizeInc* vec3(0.15f, 0.15f, 0.15f));
+    squirrel = reposition * eye2;
+    SetUniformVec3(shader_id, "object_color", vec3(0, 0, 0));
+    SetUniformMat4(shader_id, "model_matrix", squirrel);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    
+}
+
 // For randomized tree leaves colors
 vec3 green = vec3(0.0f, 1.0f, 0.0f);
 vec3 darkyellow = vec3(0.545f, 0.573f, 0.086f);
@@ -1505,7 +1589,7 @@ public:
 class WorldChunk {
 public:
     enum itemType {
-        RANDOM_TREE, SMALL_TREE, BIG_TREE, BUSH, ROCK, RABBIT
+        RANDOM_TREE, SMALL_TREE, BIG_TREE, BUSH, ROCK, RABBIT, SQUIRREL
     };
     
     vector<GeneratedTree> randomTrees;
@@ -1515,6 +1599,7 @@ public:
     vector<GeneratedItem> rockPositions;
     vector<GeneratedItem> bushPositions;
     vector<GeneratedItem> rabbitPositions;
+    vector<GeneratedItem> squirrelPositions;
     
     // Num of rows & cols = occupiable width/length of chunk + 1 for potential floating point errors
     bool occupiedGridsLeft[48][101] = {}; // Fill with false for all rows & cols
@@ -1525,7 +1610,7 @@ public:
     explicit WorldChunk(int chunkPositionID) : chunkPositionID(chunkPositionID) {
         chunkPositionZ = static_cast<float>((100 * chunkPositionID) + 50);
         
-        generateItems(9, 18, 10, 10, 5);
+        generateItems(9, 18, 10, 10, 5, 10);
     };
     
     // If item overlaps an occupied position, it's not inserted and false is returned
@@ -1549,6 +1634,9 @@ public:
                 break;
             case RABBIT:
                 positions = &rabbitPositions;
+                break;
+            case SQUIRREL:
+                positions = &squirrelPositions;
             default:
                 break;
         }
@@ -1580,7 +1668,7 @@ public:
         return true;
     }
     
-    void generateItems(int maxRandTrees, int maxBigTrees, int maxSmallTrees, int maxBushes, int maxRabbits) {
+    void generateItems(int maxRandTrees, int maxBigTrees, int maxSmallTrees, int maxBushes, int maxRabbits, int maxSquirrels) {
         
         // To toggle between left and right sides of the road
         // Based on the chunk ID so that the side that gets odd num of items (one extra item) is alternated each chunk
@@ -1625,6 +1713,13 @@ public:
             toggleSide = !toggleSide;
             insertItem(GeneratedItem(chunkPositionZ, 4.0f, toggleSide), RABBIT);
             --maxRabbits;
+        }
+        
+        // Squirrels on right & left sides
+        while (maxSquirrels > 0) {
+            toggleSide = !toggleSide;
+            insertItem(GeneratedItem(chunkPositionZ, 2.0f, toggleSide), SQUIRREL);
+            --maxSquirrels;
         }
         
     }
@@ -1689,6 +1784,11 @@ void renderScene(GLuint shader, GLuint texturedCubeVAO, GLuint sphereVAO, float 
         
         for (auto rabbit: chunk.rabbitPositions) {
             drawRabbit(shader, 0.5f, sphereVAO, rabbit.x, rabbit.z, vec3(1.0f, 1.0f, 1.0f), furTextureID, eyeTextureID, rabbit.angle);
+            glBindVertexArray(texturedCubeVAO);
+        }
+        
+        for (auto squirrel: chunk.squirrelPositions) {
+            drawSquirrel(shader, 0.5f, sphereVAO, squirrel.x, squirrel.z, vec3(0.5f, 0.3f, 0.4f), furTextureID, eyeTextureID, squirrel.angle);
             glBindVertexArray(texturedCubeVAO);
         }
         
